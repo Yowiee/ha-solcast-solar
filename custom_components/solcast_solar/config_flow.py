@@ -51,7 +51,9 @@ from .const import (
     BRK_SITE_DETAILED,
     CONFIG_DAMP,
     CONFIG_VERSION,
+    CUSTOM_AFTERNOON_HOURS_SENSOR,
     CUSTOM_HOUR_SENSOR,
+    CUSTOM_MORNING_HOURS_SENSOR,
     DEFAULT_SOLCAST_HTTPS_URL,
     DEVICE_NAME,
     DOMAIN,
@@ -191,8 +193,8 @@ async def validate_sites(hass: HomeAssistant, user_input: dict[str, Any]) -> tup
         user_input[SITE_EXPORT_ENTITY],
         user_input[SITE_EXPORT_LIMIT],
         user_input[AUTO_DAMPEN],
-        options[CUSTOM_MORNING_HOURS_SENSOR],
-        custom_afternoon_hours_sensor=options[CUSTOM_AFTERNOON_HOURS_SENSOR],
+        user_input[CUSTOM_MORNING_HOURS_SENSOR],
+        custom_afternoon_hours_sensor=user_input[CUSTOM_AFTERNOON_HOURS_SENSOR],
     )
     solcast = SolcastApi(session, options, hass)
     await solcast.read_advanced_options()
@@ -363,7 +365,9 @@ class SolcastSolarFlowHandler(ConfigFlow, domain=DOMAIN):
                     API_QUOTA: api_quota,
                     AUTO_UPDATE: int(user_input[AUTO_UPDATE]),
                     # Remaining options set to default
+                    CUSTOM_AFTERNOON_HOURS_SENSOR: 14.0,
                     CUSTOM_HOUR_SENSOR: 1,
+                    CUSTOM_MORNING_HOURS_SENSOR: 11.0,
                     HARD_LIMIT_API: "100.0",
                     KEY_ESTIMATE: "estimate",
                     BRK_ESTIMATE: True,
@@ -479,8 +483,9 @@ class SolcastSolarOptionFlowHandler(OptionsFlow):
                         errors[BASE] = EXCEPTION_CUSTOM_INVALID
                         _LOGGER.debug("Options validation failed: %s", errors[BASE])
                     else:
-                        all_config_data[CUSTOM_MORNING_HOURS_SENSOR] = custom_morning_hours_sensor
-                    # Validate the custom afternoon hours sensor.
+                        all_config_data[CUSTOM_AFTERNOON_HOURS_SENSOR] = custom_afternoon_hours_sensor
+
+                    # Validate the custom morning hours sensor.
                     custom_morning_hours_sensor = user_input[CUSTOM_MORNING_HOURS_SENSOR]
                     if custom_morning_hours_sensor < 0.0 or custom_morning_hours_sensor > 24.0:
                         errors[BASE] = EXCEPTION_CUSTOM_INVALID

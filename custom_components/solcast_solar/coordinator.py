@@ -196,7 +196,15 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
             ENTITY_LAST_UPDATED: [{METHOD: self.solcast.get_last_updated}],
             ENTITY_LAST_UPDATED_OLD: [{METHOD: self.solcast.get_last_updated}],
             ENTITY_DAMPEN: [{METHOD: self.solcast.get_dampen}],
-            ENTITY_TOTAL_KWH_FORECAST_TOMORROW_AFTERNOON: [{METHOD: self.solcast.get_total_energy_forecast_day, VALUE: [self.solcast.]}],
+            ENTITY_TOTAL_KWH_FORECAST_TOMORROW_AFTERNOON: [
+                {
+                    METHOD: self.solcast.get_forecast_tomorrow_afternoon,
+                    VALUE: self.solcast.custom_afternoon_hours_sensor,
+                }
+            ],
+            ENTITY_TOTAL_KWH_FORECAST_TOMORROW_MORNING: [
+                {METHOD: self.solcast.get_forecast_tomorrow_morning, VALUE: self.solcast.custom_morning_hours_sensor}
+            ],
         }
         days = [ENTITY_TOTAL_KWH_FORECAST_TODAY, ENTITY_TOTAL_KWH_FORECAST_TOMORROW] + [
             f"total_kwh_forecast_d{r}" for r in range(3, self.advanced_day_entities)
@@ -1254,8 +1262,8 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
             ret.update({CUSTOM_HOURS: self.solcast.options.custom_hour_sensor})
 
         if key == ENTITY_TOTAL_KWH_FORECAST_TOMORROW_MORNING:
-            ret.update({ENTITY_TOTAL_KWH_FORECAST_TOMORROW_MORNING: self.solcast.options.custom_morning_hours_sensor})
-            
+            ret.update({CUSTOM_MORNING_HOURS: self.solcast.options.custom_morning_hours_sensor})
+
         if key == ENTITY_TOTAL_KWH_FORECAST_TOMORROW_AFTERNOON:
             ret.update({CUSTOM_AFTERNOON_HOURS: self.solcast.options.custom_afternoon_hours_sensor})
 

@@ -2448,10 +2448,10 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         site: str | None = None,
         forecast_confidence: str | None = None,
     ) -> int | None:
-        """Return forecast for tomorrow from start_hour to midnight.
+        """Return forecast for tomorrow from start_hour to midnight of the next day.
 
         Arguments:
-            start_time (float): Local time of day to start integration.
+            start_time (float): Local time of day, in hours, to start integration.
             site (str): An optional Solcast site ID, used to build site breakdown attributes.
             forecast_confidence (str): A optional forecast type, used to select the pv_estimate, pv_estimate10 or pv_estimate90 returned.
 
@@ -2461,6 +2461,33 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         minutes, hours = math.modf(start_time)
         start_utc = self.get_day_start_utc(future=1) + timedelta(hours=hours, minutes=minutes)
         end_utc = self.get_day_start_utc(future=2)
+        remaining = self.__get_forecast_pv_remaining(
+            start_utc,
+            end_utc=end_utc,
+            site=site,
+            forecast_confidence=forecast_confidence,
+        )
+        return round(1000 * remaining) if remaining is not None else None
+
+    def get_forecast_tomorrow_morning(
+        self,
+        end_time: float,
+        site: str | None = None,
+        forecast_confidence: str | None = None,
+    ) -> int | None:
+        """Return forecast for tomorrow from midnight to end_time.
+
+        Arguments:
+            end_time (float): Local time of day, in hours, to end integration.
+            site (str): An optional Solcast site ID, used to build site breakdown attributes.
+            forecast_confidence (str): A optional forecast type, used to select the pv_estimate, pv_estimate10 or pv_estimate90 returned.
+
+        Returns:
+            int | None - A forecast for a multiple hour period as Wh (either used for a sensor or its attributes).
+        """
+        minutes, hours = math.modf(end_time)
+        start_utc = self.get_day_start_utc(future=1)
+        end_utc = self.get_day_start_utc(future=1) + timedelta(hours=hours, minutes=minutes)
         remaining = self.__get_forecast_pv_remaining(
             start_utc,
             end_utc=end_utc,
