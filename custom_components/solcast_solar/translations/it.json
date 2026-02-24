@@ -352,7 +352,9 @@
           "site_damp": "Lo smorzamento granulare è impostato: Cancella per ripristinare lo smorzamento orario generale",
           "site_export_entity": "Entità di esportazione del sito opzionale per smorzamento automatico (Wh/kWh/MWh, aumento totale)",
           "site_export_limit": "Limite di esportazione del sito se l'esportazione del sito è specificata (kW)",
-          "use_actuals": "Storia delle previsioni da mostrare sul dashboard Energia"
+          "use_actuals": "Storia delle previsioni da mostrare sul dashboard Energia",
+          "custom_morning_hours_sensor": "Custom morning hours sensor (min=0, max=24)",
+          "custom_afternoon_hours_sensor": "Custom afternoon hours sensor (min=0, max=24)"
         },
         "description": "Opzioni di configurazione di Solcast"
       }

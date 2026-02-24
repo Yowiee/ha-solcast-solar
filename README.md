@@ -39,41 +39,63 @@ This integration is not created by, maintained, endorsed nor approved by Solcast
 > This integration can be used as a replacement for the aging oziee/ha-solcast-solar integration, which is no longer being developed and has been removed. Uninstalling the Oziee version then installing this one, or simply downloading this one over that one will preserve all history and configuration. If you **uninstalled** the Oziee integration, and then installed this one, then you will need to re-select to use Solcast Solar as the source of forecast production for your Energy dashboard.
 
 # Table of contents
-1. [Key Solcast integration concepts](#key-solcast-integration-concepts)
-1. [Solcast requirements](#solcast-requirements)
-1. [Installation](#installation)
-    1. [HACS recommended](#hacs-recommended)
-    1. [Installing manually in HACS](#installing-manually-in-hacs)
-    1. [Installing manually (not using HACS)](#installing-manually-(not-using-hacs))
-    1. [Beta versions](#beta-versions)
-1. [Configuration](#configuration)
-    1. [Updating forecasts](#updating-forecasts)
-        1. [Auto-update of forecasts](#auto-update-of-forecasts)
-        1. [Using an HA automation to update forecasts](#using-an-ha-automation-to-update-forecasts)
-    1. [Set up HA energy dashboard settings](#set-up-ha-energy-dashboard-settings)
-1. [Interacting](#interacting)
-    1. [Sensors](#sensors)
-    1. [Attributes](#attributes)
-    1. [Actions](#actions)
-    1. [Configuration](#configuration)
-    1. [Diagnostic](#diagnostic)
-1. [Advanced configuration](#advanced-configuration)
-    1. [Dampening configuration](#dampening-configuration)
-        1. [Automated dampening](#automated-dampening)
-        1. [Simple hourly dampening](#simple-hourly-dampening)
-        1. [Granular dampening](#granular-dampening)
-        1. [Reading forecast values in an automation](#reading-forecast-values-in-an-automation)
-        1. [Reading dampening values](#reading-dampening-values)
-    1. [Sensor attributes configuration](#sensor-attributes-configuration)
-    1. [Hard limit configuration](#hard-limit-configuration)
-    1. [Excluded sites configuration](#excluded-sites-configuration)
-    1. [Advanced configuration options](#advanced-configuration-options)
-1. [Sample template sensors](#sample-template-sensors)
-1. [Sample Apex chart for dashboard](#sample-apex-chart-for-dashboard)
-1. [Known issues](#known-issues)
-1. [Troubleshooting](#troubleshooting)
-1. [Complete integration removal](#complete-integration-removal)
-1. [Changes](#Changes)
+- [HA Solcast PV Solar Forecast Integration](#ha-solcast-pv-solar-forecast-integration)
+  - [Preamble](#preamble)
+- [Table of contents](#table-of-contents)
+  - [Key Solcast integration concepts](#key-solcast-integration-concepts)
+  - [Solcast requirements](#solcast-requirements)
+  - [Installation](#installation)
+    - [HACS recommended](#hacs-recommended)
+    - [Installing manually in HACS](#installing-manually-in-hacs)
+    - [Installing manually (not using HACS)](#installing-manually-not-using-hacs)
+    - [Beta versions](#beta-versions)
+  - [Configuration](#configuration)
+    - [Updating forecasts](#updating-forecasts)
+      - [Auto-update of forecasts](#auto-update-of-forecasts)
+      - [Using an HA automation to update forecasts](#using-an-ha-automation-to-update-forecasts)
+    - [Set up HA energy dashboard settings](#set-up-ha-energy-dashboard-settings)
+  - [Interacting](#interacting)
+    - [Sensors](#sensors)
+    - [Attributes](#attributes)
+    - [Actions](#actions)
+    - [Configuration](#configuration-1)
+    - [Diagnostic](#diagnostic)
+  - [Advanced configuration](#advanced-configuration)
+    - [Dampening configuration](#dampening-configuration)
+      - [Automated dampening](#automated-dampening)
+        - [Theory of operation](#theory-of-operation)
+        - [Key input: Estimated actual data from Solcast](#key-input-estimated-actual-data-from-solcast)
+        - [Key input: Actual PV generation for your site](#key-input-actual-pv-generation-for-your-site)
+        - [Optional input: Site export to the grid, combined with a limit value](#optional-input-site-export-to-the-grid-combined-with-a-limit-value)
+        - [Initial activation](#initial-activation)
+        - [Modifying automated dampening behaviour](#modifying-automated-dampening-behaviour)
+        - [Automated dampening notes](#automated-dampening-notes)
+        - [Feedback](#feedback)
+      - [Simple hourly dampening](#simple-hourly-dampening)
+      - [Granular dampening](#granular-dampening)
+      - [Reading forecast values in an automation](#reading-forecast-values-in-an-automation)
+      - [Reading estimated actual values in an automation](#reading-estimated-actual-values-in-an-automation)
+      - [Reading dampening values](#reading-dampening-values)
+    - [Sensor attributes configuration](#sensor-attributes-configuration)
+    - [Hard limit configuration](#hard-limit-configuration)
+    - [Excluded sites configuration](#excluded-sites-configuration)
+    - [Advanced configuration options](#advanced-configuration-options)
+  - [Sample template sensors](#sample-template-sensors)
+    - [Combining site data](#combining-site-data)
+  - [Sample Apex chart for dashboard](#sample-apex-chart-for-dashboard)
+  - [Known issues](#known-issues)
+    - [Removal of zero-length files](#removal-of-zero-length-files)
+    - [Sample sites](#sample-sites)
+  - [Troubleshooting](#troubleshooting)
+    - [API key issues](#api-key-issues)
+    - [Forecast update issues](#forecast-update-issues)
+    - [Forecasted values look "just wrong"](#forecasted-values-look-just-wrong)
+    - [Exceptions in logs](#exceptions-in-logs)
+    - [Final word](#final-word)
+  - [Complete integration removal](#complete-integration-removal)
+  - [Changes](#changes)
+    - [Prior changes](#prior-changes)
+  - [Credits](#credits)
 
 ## Key Solcast integration concepts
 
@@ -432,6 +454,8 @@ All sensor names are preceded by the integration name `Solcast PV Forecast`.
 | `Forecast Power Now` | number | Y | `W` | Predicted nominal solar power this moment (attributes contain site breakdown). |
 | `Forecast Power in 30 Minutes` | number | Y | `W` | Predicted nominal solar power in 30 minutes (attributes contain site breakdown). |
 | `Forecast Power in 1 Hour` | number | Y | `W` | Predicted nominal solar power in 1 hour (attributes contain site breakdown). |
+| `Forecast Tomorrow Morning` | number | Y | `kWh` | Custom user defined forecasted solar production for day + 1 (tomorrow) from 12am -> *morning* hour.|
+| `Forecast Tomorrow Afternoon` | number | Y | `kWh` | Custom user defined forecasted solar production for day + 1 (tomorrow) from *afternoon* hour -> 12am. |
 
 > [!NOTE]
 >
@@ -488,6 +512,14 @@ For all sensors:
 For the `Forecast Next X Hours` sensor only:
 
 * `custom_hours`: The number of hours reported by the sensor (number)
+
+For the `Forecast Morning` sensor only:
+
+* `end_hour`: Hour of day to end morning integration (number).  Value is in 24hr and minutes caluclate from fractional part of the number, e.g. 10.33 = 10:20am.<br>Note: Value can be after 12pm. 
+
+For the `Forecast Afternoon` sensor only:
+
+* `start_hour`: Hour of day to start afternoon integration (number).  Value is in 24hr and minutes caluclate from fractional part of the number, e.g. 14.75 = 2:45pm.<br>Note: Value can be before 12pm.
 
 For daily forecast sensors only:
 

@@ -21,10 +21,14 @@ ADVANCED_TYPE: Final[str] = "type"
 ADVANCED_API_RAISE_ISSUES: Final[str] = "api_raise_issues"
 ADVANCED_AUTOMATED_DAMPENING_DELTA_ADJUSTMENT_MODEL: Final[str] = "automated_dampening_delta_adjustment_model"
 ADVANCED_AUTOMATED_DAMPENING_GENERATION_FETCH_DELAY: Final[str] = "automated_dampening_generation_fetch_delay"
-ADVANCED_AUTOMATED_DAMPENING_GENERATION_HISTORY_LOAD_DAYS: Final[str] = "automated_dampening_generation_history_load_days"
+ADVANCED_AUTOMATED_DAMPENING_GENERATION_HISTORY_LOAD_DAYS: Final[str] = (
+    "automated_dampening_generation_history_load_days"
+)
 ADVANCED_AUTOMATED_DAMPENING_IGNORE_INTERVALS: Final[str] = "automated_dampening_ignore_intervals"
 ADVANCED_AUTOMATED_DAMPENING_INSIGNIFICANT_FACTOR: Final[str] = "automated_dampening_insignificant_factor"
-ADVANCED_AUTOMATED_DAMPENING_INSIGNIFICANT_FACTOR_ADJUSTED: Final[str] = "automated_dampening_insignificant_factor_adjusted"
+ADVANCED_AUTOMATED_DAMPENING_INSIGNIFICANT_FACTOR_ADJUSTED: Final[str] = (
+    "automated_dampening_insignificant_factor_adjusted"
+)
 ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_GENERATION: Final[str] = "automated_dampening_minimum_matching_generation"
 ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_INTERVALS: Final[str] = "automated_dampening_minimum_matching_intervals"
 ADVANCED_AUTOMATED_DAMPENING_MODEL: Final[str] = "automated_dampening_model"
@@ -75,8 +79,12 @@ CONFIG_DISCRETE_NAME: Final[str] = "solcast_solar"
 CONFIG_FOLDER_DISCRETE: Final[bool] = True  # Whether to use a sub-folder for config files
 CONFIG_VERSION: Final[int] = 18
 CURRENT_NAME: Final[str] = "current_name"
+CUSTOM_AFTERNOON_HOURS: Final[str] = "custom_afternoon_hours"
+CUSTOM_AFTERNOON_HOURS_SENSOR: Final[str] = "custom_afternoon_hours_sensor"
 CUSTOM_HOURS: Final[str] = "custom_hours"
 CUSTOM_HOUR_SENSOR: Final[str] = "customhoursensor"
+CUSTOM_MORNING_HOURS: Final[str] = "custom_morning_hours"
+CUSTOM_MORNING_HOURS_SENSOR: Final[str] = "custom_morning_hours_sensor"
 DAILY_LIMIT: Final[str] = "daily_limit"
 DAILY_LIMIT_CONSUMED: Final[str] = "daily_limit_consumed"
 DAMP_FACTOR: Final[str] = "damp_factor"
@@ -89,22 +97,46 @@ DATA_SET_FORECAST_UNDAMPENED: Final[str] = "undampened forecast"
 DAY_NAME: Final[str] = "dayname"
 DEFAULT: Final[str] = "default"
 DEFAULT_DAMPENING_DELTA_ADJUSTMENT_MODEL: Final[int] = 0  # Logarithmic adjustment is default model
-DEFAULT_DAMPENING_INSIGNIFICANT: Final[float] = 0.95  # Dampening factors considered insignificant for automated dampening
-DEFAULT_DAMPENING_INSIGNIFICANT_ADJ: Final[float] = 0.95  # Adjusted dampening factors considered insignificant for automated dampening
-DEFAULT_DAMPENING_LOG_DELTA_ADJUSTMENT: Final[bool] = True  # Whether to logarithmically adjust applied automated dampening factors
-DEFAULT_DAMPENING_MINIMUM_GENERATION: Final[int] = 2  # Minimum number of matching intervals with generation data to consider
-DEFAULT_DAMPENING_MINIMUM_INTERVALS: Final[int] = 2  # Minimum number of matching intervals to consider for automated dampening
-DEFAULT_DAMPENING_MODEL: Final[int] = 0  # Damping calculation model (0 = Default, 1 = Max matched, 2 = Mean matched, 3 = Min matched)
+DEFAULT_DAMPENING_INSIGNIFICANT: Final[float] = (
+    0.95  # Dampening factors considered insignificant for automated dampening
+)
+DEFAULT_DAMPENING_INSIGNIFICANT_ADJ: Final[float] = (
+    0.95  # Adjusted dampening factors considered insignificant for automated dampening
+)
+DEFAULT_DAMPENING_LOG_DELTA_ADJUSTMENT: Final[bool] = (
+    True  # Whether to logarithmically adjust applied automated dampening factors
+)
+DEFAULT_DAMPENING_MINIMUM_GENERATION: Final[int] = (
+    2  # Minimum number of matching intervals with generation data to consider
+)
+DEFAULT_DAMPENING_MINIMUM_INTERVALS: Final[int] = (
+    2  # Minimum number of matching intervals to consider for automated dampening
+)
+DEFAULT_DAMPENING_MODEL: Final[int] = (
+    0  # Damping calculation model (0 = Default, 1 = Max matched, 2 = Mean matched, 3 = Min matched)
+)
 DEFAULT_DAMPENING_MODEL_DAYS: Final[int] = 14  # Number of days over which to model automated dampening
-DEFAULT_DAMPENING_NO_LIMITING_CONSISTENCY: Final[bool] = False  # Whether to ignore intervals that have been limited at least once
-DEFAULT_DAMPENING_SIMILAR_PEAK: Final[float] = 0.90  # Factor to consider similar estimated actual peak generation for automated dampening
-DEFAULT_DAMPENING_SUPPRESSION_ENTITY: Final[str] = "solcast_suppress_auto_dampening"  # Entity ID to invalidate generation when active
-DEFAULT_ESTIMATED_ACTUALS_FETCH_DELAY: Final[int] = 0  # Minutes to wait after midnight before get estimated actuals (plus random offset)
+DEFAULT_DAMPENING_NO_LIMITING_CONSISTENCY: Final[bool] = (
+    False  # Whether to ignore intervals that have been limited at least once
+)
+DEFAULT_DAMPENING_SIMILAR_PEAK: Final[float] = (
+    0.90  # Factor to consider similar estimated actual peak generation for automated dampening
+)
+DEFAULT_DAMPENING_SUPPRESSION_ENTITY: Final[str] = (
+    "solcast_suppress_auto_dampening"  # Entity ID to invalidate generation when active
+)
+DEFAULT_ESTIMATED_ACTUALS_FETCH_DELAY: Final[int] = (
+    0  # Minutes to wait after midnight before get estimated actuals (plus random offset)
+)
 DEFAULT_FORECAST_DAYS: Final[int] = 14  # Minimum 8, maximum 14
 DEFAULT_FORECAST_DAY_SENSORS: Final[int] = 8  # Minimum 8, maximum 14
 DEFAULT_GENERATION_FETCH_DELAY: Final[int] = 0  # Minutes to wait after midnight before get past day generation
-DEFAULT_GENERATION_HISTORY_LOAD_DAYS: Final[int] = 7  # Number of days of generation history to load when no data present
-DEFAULT_GRANULAR_DAMPENING_DELTA_ADJUSTMENT: Final[bool] = False  # Whether to use delta adjustment for granular dampening
+DEFAULT_GENERATION_HISTORY_LOAD_DAYS: Final[int] = (
+    7  # Number of days of generation history to load when no data present
+)
+DEFAULT_GRANULAR_DAMPENING_DELTA_ADJUSTMENT: Final[bool] = (
+    False  # Whether to use delta adjustment for granular dampening
+)
 DEFAULT_HISTORY_MAX: Final[int] = 730  # Maximum number of history days to keep
 DEFAULT_SOLCAST_HTTPS_URL: Final[str] = "https://api.solcast.com.au"
 DELAYED_RESTART_ON_CRASH: Final[int] = 15  # Minutes to delay restart after crash
@@ -142,6 +174,8 @@ ENTITY_POWER_NOW_30M: Final[str] = "power_now_30m"
 ENTITY_TOTAL_KWH_FORECAST: Final[str] = "total_kwh_forecast"
 ENTITY_TOTAL_KWH_FORECAST_TODAY: Final[str] = "total_kwh_forecast_today"
 ENTITY_TOTAL_KWH_FORECAST_TOMORROW: Final[str] = "total_kwh_forecast_tomorrow"
+ENTITY_TOTAL_KWH_FORECAST_TOMORROW_AFTERNOON: Final[str] = "total_kwh_forecast_tomorrow_afternoon"
+ENTITY_TOTAL_KWH_FORECAST_TOMORROW_MORNING: Final[str] = "total_kwh_forecast_tomorrow_morning"
 ENTRY_ID: Final[str] = "entry_id"
 ENTRY_OPTIONS: Final[str] = "entry_options"
 ENTRY_TYPE_SERVICE: Final[str] = "service"
@@ -236,7 +270,9 @@ LEARN_MORE: Final[str] = "learn_more"
 LEARN_MORE_ADVANCED: Final[str] = "https://github.com/BJReplay/ha-solcast-solar/blob/main/ADVOPTIONS.md"
 LEARN_MORE_CORRUPT_FILE: Final[str] = "https://github.com/BJReplay/ha-solcast-solar?tab=readme-ov-file#known-issues"
 LEARN_MORE_MISSING_FORECAST_DATA: Final[str] = "https://github.com/BJReplay/ha-solcast-solar/blob/main/FAQ.md"
-LEARN_MORE_UNUSUAL_AZIMUTH: Final[str] = "https://github.com/BJReplay/ha-solcast-solar?tab=readme-ov-file#solcast-requirements"
+LEARN_MORE_UNUSUAL_AZIMUTH: Final[str] = (
+    "https://github.com/BJReplay/ha-solcast-solar?tab=readme-ov-file#solcast-requirements"
+)
 MANUFACTURER: Final[str] = "BJReplay"
 MAXIMUM: Final[str] = "max"
 MESSAGE: Final[str] = "message"
@@ -360,7 +396,10 @@ ADVANCED_OPTIONS: Final[dict[str, dict[str, Any]]] = {
         MINIMUM: 1,
         MAXIMUM: 21,
         DEFAULT: DEFAULT_DAMPENING_MINIMUM_GENERATION,
-        OPTION_LESS_THAN_OR_EQUAL: [ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_INTERVALS, ADVANCED_AUTOMATED_DAMPENING_MODEL_DAYS],
+        OPTION_LESS_THAN_OR_EQUAL: [
+            ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_INTERVALS,
+            ADVANCED_AUTOMATED_DAMPENING_MODEL_DAYS,
+        ],
     },
     ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_INTERVALS: {
         ADVANCED_TYPE: ADVANCED_OPTION.INT,
@@ -401,7 +440,10 @@ ADVANCED_OPTIONS: Final[dict[str, dict[str, Any]]] = {
         MAXIMUM: 1.0,
         DEFAULT: DEFAULT_DAMPENING_SIMILAR_PEAK,
     },
-    ADVANCED_AUTOMATED_DAMPENING_SUPPRESSION_ENTITY: {ADVANCED_TYPE: ADVANCED_OPTION.STR, DEFAULT: DEFAULT_DAMPENING_SUPPRESSION_ENTITY},
+    ADVANCED_AUTOMATED_DAMPENING_SUPPRESSION_ENTITY: {
+        ADVANCED_TYPE: ADVANCED_OPTION.STR,
+        DEFAULT: DEFAULT_DAMPENING_SUPPRESSION_ENTITY,
+    },
     ADVANCED_ENTITY_LOGGING: {ADVANCED_TYPE: ADVANCED_OPTION.BOOL, DEFAULT: SENSOR_UPDATE_LOGGING},
     ADVANCED_ESTIMATED_ACTUALS_FETCH_DELAY: {
         ADVANCED_TYPE: ADVANCED_OPTION.INT,
@@ -412,7 +454,12 @@ ADVANCED_OPTIONS: Final[dict[str, dict[str, Any]]] = {
     },
     ADVANCED_ESTIMATED_ACTUALS_LOG_APE_PERCENTILES: {ADVANCED_TYPE: ADVANCED_OPTION.LIST_INT, DEFAULT: [50]},
     ADVANCED_ESTIMATED_ACTUALS_LOG_MAPE_BREAKDOWN: {ADVANCED_TYPE: ADVANCED_OPTION.BOOL, DEFAULT: False},
-    ADVANCED_FORECAST_FUTURE_DAYS: {ADVANCED_TYPE: ADVANCED_OPTION.INT, MINIMUM: 8, MAXIMUM: 14, DEFAULT: DEFAULT_FORECAST_DAYS},
+    ADVANCED_FORECAST_FUTURE_DAYS: {
+        ADVANCED_TYPE: ADVANCED_OPTION.INT,
+        MINIMUM: 8,
+        MAXIMUM: 14,
+        DEFAULT: DEFAULT_FORECAST_DAYS,
+    },
     ADVANCED_FORECAST_DAY_ENTITIES: {
         ADVANCED_TYPE: ADVANCED_OPTION.INT,
         MINIMUM: 8,

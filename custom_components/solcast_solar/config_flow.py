@@ -191,6 +191,8 @@ async def validate_sites(hass: HomeAssistant, user_input: dict[str, Any]) -> tup
         user_input[SITE_EXPORT_ENTITY],
         user_input[SITE_EXPORT_LIMIT],
         user_input[AUTO_DAMPEN],
+        options[CUSTOM_MORNING_HOURS_SENSOR],
+        custom_afternoon_hours_sensor=options[CUSTOM_AFTERNOON_HOURS_SENSOR],
     )
     solcast = SolcastApi(session, options, hass)
     await solcast.read_advanced_options()
@@ -321,7 +323,9 @@ class SolcastSolarFlowHandler(ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_API_KEY, default=all_config_data[CONF_API_KEY]): str,
                     vol.Required(API_QUOTA, default=all_config_data[API_QUOTA]): str,
                     vol.Required(AUTO_UPDATE, default=str(all_config_data[AUTO_UPDATE])): SelectSelector(
-                        SelectSelectorConfig(options=AUTO_UPDATE_OPTIONS, mode=SelectSelectorMode.DROPDOWN, translation_key=AUTO_UPDATE)
+                        SelectSelectorConfig(
+                            options=AUTO_UPDATE_OPTIONS, mode=SelectSelectorMode.DROPDOWN, translation_key=AUTO_UPDATE
+                        )
                     ),
                 }
             ),
@@ -388,7 +392,9 @@ class SolcastSolarFlowHandler(ConfigFlow, domain=DOMAIN):
         solcast_json_exists = Path(f"{self.hass.config.config_dir}/solcast.json").is_file()
         _LOGGER.debug(
             "File solcast.json %s",
-            "exists, defaulting to auto-update off" if solcast_json_exists else "does not exist, defaulting to auto-update on",
+            "exists, defaulting to auto-update off"
+            if solcast_json_exists
+            else "does not exist, defaulting to auto-update on",
         )
 
         return self.async_show_form(
@@ -398,7 +404,9 @@ class SolcastSolarFlowHandler(ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_API_KEY, default=""): str,
                     vol.Required(API_QUOTA, default="10"): str,
                     vol.Required(AUTO_UPDATE, default=str(int(not solcast_json_exists))): SelectSelector(
-                        SelectSelectorConfig(options=AUTO_UPDATE_OPTIONS, mode=SelectSelectorMode.DROPDOWN, translation_key=AUTO_UPDATE)
+                        SelectSelectorConfig(
+                            options=AUTO_UPDATE_OPTIONS, mode=SelectSelectorMode.DROPDOWN, translation_key=AUTO_UPDATE
+                        )
                     ),
                 }
             ),
@@ -465,6 +473,21 @@ class SolcastSolarOptionFlowHandler(OptionsFlow):
                     else:
                         all_config_data[CUSTOM_HOUR_SENSOR] = custom_hour_sensor
 
+                    # Validate the custom afternoon hours sensor.
+                    custom_afternoon_hours_sensor = user_input[CUSTOM_AFTERNOON_HOURS_SENSOR]
+                    if custom_afternoon_hours_sensor < 0.0 or custom_afternoon_hours_sensor > 24.0:
+                        errors[BASE] = EXCEPTION_CUSTOM_INVALID
+                        _LOGGER.debug("Options validation failed: %s", errors[BASE])
+                    else:
+                        all_config_data[CUSTOM_MORNING_HOURS_SENSOR] = custom_morning_hours_sensor
+                    # Validate the custom afternoon hours sensor.
+                    custom_morning_hours_sensor = user_input[CUSTOM_MORNING_HOURS_SENSOR]
+                    if custom_morning_hours_sensor < 0.0 or custom_morning_hours_sensor > 24.0:
+                        errors[BASE] = EXCEPTION_CUSTOM_INVALID
+                        _LOGGER.debug("Options validation failed: %s", errors[BASE])
+                    else:
+                        all_config_data[CUSTOM_MORNING_HOURS_SENSOR] = custom_morning_hours_sensor
+
                 if not errors:
                     # Validate the hard limit.
                     hard_limit = user_input[HARD_LIMIT_API]
@@ -492,10 +515,14 @@ class SolcastSolarOptionFlowHandler(OptionsFlow):
                 all_config_data[USE_ACTUALS] = int(user_input.get(USE_ACTUALS, 0))
                 all_config_data[GENERATION_ENTITIES] = user_input.get(GENERATION_ENTITIES, [])
                 all_config_data[AUTO_DAMPEN] = user_input.get(AUTO_DAMPEN, False)
-                all_config_data[SITE_EXPORT_ENTITY] = user_input[SITE_EXPORT_ENTITY][0] if user_input.get(SITE_EXPORT_ENTITY) else ""
+                all_config_data[SITE_EXPORT_ENTITY] = (
+                    user_input[SITE_EXPORT_ENTITY][0] if user_input.get(SITE_EXPORT_ENTITY) else ""
+                )
                 all_config_data[SITE_EXPORT_LIMIT] = user_input.get(SITE_EXPORT_LIMIT, 0)
                 if not errors:
-                    if int(user_input.get(USE_ACTUALS, 0)) != HistoryType.FORECASTS and not user_input.get(GET_ACTUALS, False):
+                    if int(user_input.get(USE_ACTUALS, 0)) != HistoryType.FORECASTS and not user_input.get(
+                        GET_ACTUALS, False
+                    ):
                         errors[BASE] = EXCEPTION_ACTUALS_WITHOUT_GET
                         _LOGGER.debug("Options validation failed: %s", errors[BASE])
                 if not errors:
@@ -574,7 +601,8 @@ class SolcastSolarOptionFlowHandler(OptionsFlow):
         exclude: list[SelectOptionDict] = [SelectOptionDict(label="not_loaded", value="")]
         if solcast is not None:
             exclude = [
-                SelectOptionDict(label=site[NAME] + " (" + site[RESOURCE_ID] + ")", value=site[RESOURCE_ID]) for site in solcast.sites
+                SelectOptionDict(label=site[NAME] + " (" + site[RESOURCE_ID] + ")", value=site[RESOURCE_ID])
+                for site in solcast.sites
             ]
 
         entity_registry = er.async_get(self.hass)
@@ -606,10 +634,14 @@ class SolcastSolarOptionFlowHandler(OptionsFlow):
                     vol.Required(CONF_API_KEY, default=self._options.get(CONF_API_KEY)): str,
                     vol.Required(API_QUOTA, default=self._options[API_QUOTA]): str,
                     vol.Required(AUTO_UPDATE, default=str(int(self._options[AUTO_UPDATE]))): SelectSelector(
-                        SelectSelectorConfig(options=update, mode=SelectSelectorMode.DROPDOWN, translation_key=AUTO_UPDATE)
+                        SelectSelectorConfig(
+                            options=update, mode=SelectSelectorMode.DROPDOWN, translation_key=AUTO_UPDATE
+                        )
                     ),
                     vol.Required(KEY_ESTIMATE, default=self._options.get(KEY_ESTIMATE, "estimate")): SelectSelector(
-                        SelectSelectorConfig(options=forecasts, mode=SelectSelectorMode.DROPDOWN, translation_key=KEY_ESTIMATE)
+                        SelectSelectorConfig(
+                            options=forecasts, mode=SelectSelectorMode.DROPDOWN, translation_key=KEY_ESTIMATE
+                        )
                     ),
                     vol.Required(CUSTOM_HOUR_SENSOR, default=self._options[CUSTOM_HOUR_SENSOR]): int,
                     vol.Required(HARD_LIMIT_API, default=self._options.get(HARD_LIMIT_API)): str,
@@ -625,7 +657,9 @@ class SolcastSolarOptionFlowHandler(OptionsFlow):
                     ),
                     vol.Optional(GET_ACTUALS, default=self._options[GET_ACTUALS]): bool,
                     vol.Optional(AUTO_DAMPEN, default=self._options[AUTO_DAMPEN]): bool,
-                    vol.Optional(GENERATION_ENTITIES, default=self._options.get(GENERATION_ENTITIES, [])): SelectSelector(
+                    vol.Optional(
+                        GENERATION_ENTITIES, default=self._options.get(GENERATION_ENTITIES, [])
+                    ): SelectSelector(
                         SelectSelectorConfig(options=sensors, mode=SelectSelectorMode.DROPDOWN, multiple=True)
                     ),
                     vol.Optional(SITE_EXPORT_ENTITY, default=site_export_default): SelectSelector(
@@ -636,7 +670,9 @@ class SolcastSolarOptionFlowHandler(OptionsFlow):
                         default=self._options.get(SITE_EXPORT_LIMIT, 0.0),
                     ): vol.All(vol.Coerce(float), vol.Range(min=0.0, max=100.0)),
                     vol.Required(USE_ACTUALS, default=str(int(self._options.get(USE_ACTUALS, 0)))): SelectSelector(
-                        SelectSelectorConfig(options=history, mode=SelectSelectorMode.DROPDOWN, translation_key=ENERGY_HISTORY)
+                        SelectSelectorConfig(
+                            options=history, mode=SelectSelectorMode.DROPDOWN, translation_key=ENERGY_HISTORY
+                        )
                     ),
                 }
                 | damp
@@ -674,9 +710,9 @@ class SolcastSolarOptionFlowHandler(OptionsFlow):
             step_id="dampen",
             data_schema=vol.Schema(
                 {
-                    vol.Required(f"damp{factor:02d}", description={SUGGESTED_VALUE: extant_factors[f"damp{factor:02d}"]}): vol.All(
-                        vol.Coerce(float), vol.Range(min=0.0, max=1.0)
-                    )
+                    vol.Required(
+                        f"damp{factor:02d}", description={SUGGESTED_VALUE: extant_factors[f"damp{factor:02d}"]}
+                    ): vol.All(vol.Coerce(float), vol.Range(min=0.0, max=1.0))
                     for factor in range(24)
                 }
             ),

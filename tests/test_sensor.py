@@ -219,6 +219,56 @@ SENSORS: dict[str, dict[str, Any]] = {
         "can_be_unavailable": True,
         "should_be_disabled": True,
     },
+    # TODO: add test
+    "forecast_today_morning": {
+        "state": {"2": "42.552", "1": "58.509"},
+        "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR,
+        "state_class": SensorStateClass.TOTAL,
+        "attributes": {
+            "2": {"estimate": 42.552, "estimate10": 35.46, "estimate90": 47.28},
+            "1": {"estimate": 58.509, "estimate10": 48.7575, "estimate90": 65.01},
+        },
+        "breakdown": {
+            "1": {
+                "1111_1111_1111_1111": 26.595,
+                "estimate_1111_1111_1111_1111": 26.595,
+                "estimate10_1111_1111_1111_1111": 22.1625,
+                "estimate90_1111_1111_1111_1111": 29.55,
+            },
+            "2": {
+                "2222_2222_2222_2222": 15.957,
+                "estimate_2222_2222_2222_2222": 15.957,
+                "estimate10_2222_2222_2222_2222": 13.2975,
+                "estimate90_2222_2222_2222_2222": 17.73,
+            },
+        },
+        "can_be_unavailable": True,
+    },
+    # TODO: add test
+    "forecast_today_afternoon": {
+        "state": {"2": "42.552", "1": "58.509"},
+        "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR,
+        "state_class": SensorStateClass.TOTAL,
+        "attributes": {
+            "2": {"estimate": 42.552, "estimate10": 35.46, "estimate90": 47.28},
+            "1": {"estimate": 58.509, "estimate10": 48.7575, "estimate90": 65.01},
+        },
+        "breakdown": {
+            "1": {
+                "1111_1111_1111_1111": 26.595,
+                "estimate_1111_1111_1111_1111": 26.595,
+                "estimate10_1111_1111_1111_1111": 22.1625,
+                "estimate90_1111_1111_1111_1111": 29.55,
+            },
+            "2": {
+                "2222_2222_2222_2222": 15.957,
+                "estimate_2222_2222_2222_2222": 15.957,
+                "estimate10_2222_2222_2222_2222": 13.2975,
+                "estimate90_2222_2222_2222_2222": 17.73,
+            },
+        },
+        "can_be_unavailable": True,
+    },
     "peak_forecast_tomorrow": {
         "state": {"2": "7200", "1": "9900"},
         "unit_of_measurement": UnitOfPower.WATT,
@@ -390,7 +440,9 @@ async def test_sensor_states(  # noqa: C901
         return estimate_set
 
     try:
-        config_dir = f"{hass.config.config_dir}/{CONFIG_DISCRETE_NAME}" if CONFIG_FOLDER_DISCRETE else hass.config.config_dir
+        config_dir = (
+            f"{hass.config.config_dir}/{CONFIG_DISCRETE_NAME}" if CONFIG_FOLDER_DISCRETE else hass.config.config_dir
+        )
         if CONFIG_FOLDER_DISCRETE:
             Path(config_dir).mkdir(parents=False, exist_ok=True)
         Path(f"{config_dir}/solcast-advanced.json").write_text(json.dumps({"entity_logging": True}), encoding="utf-8")
@@ -426,7 +478,9 @@ async def test_sensor_states(  # noqa: C901
                             values["breakdown"]["3"] = {}
                             for breakdown, value in values["breakdown"]["2"].items():
                                 values["breakdown"]["3"][breakdown.replace("2", "3")] = value
-                            values["attributes"]["1"] |= values["breakdown"]["1"] | values["breakdown"]["2"] | values["breakdown"]["3"]
+                            values["attributes"]["1"] |= (
+                                values["breakdown"]["1"] | values["breakdown"]["2"] | values["breakdown"]["3"]
+                            )
                 case "2":
                     for values in sensors.values():
                         if values.get("breakdown"):
@@ -476,7 +530,9 @@ async def test_sensor_states(  # noqa: C901
                 test = state.state
                 with contextlib.suppress(AttributeError, ValueError):
                     testd = dt.fromisoformat(test)
-                    test = testd.replace(year=2024, month=1, day=1).astimezone(ZoneInfo(hass.config.time_zone)).isoformat()
+                    test = (
+                        testd.replace(year=2024, month=1, day=1).astimezone(ZoneInfo(hass.config.time_zone)).isoformat()
+                    )
                 if attrs["state"][key] == "isodate":
                     assert dt.fromisoformat(test)
                 else:

@@ -352,7 +352,9 @@
           "site_damp": "گرینولر ڈیمپننگ سیٹ ہے: کلیئر ڈیمپننگ کو مجموعی طور پر فی گھنٹہ ڈیمپننگ پر واپس لوٹنا",
           "site_export_entity": "خودکار ڈیمپننگ کے لیے اختیاری سائٹ ایکسپورٹ ہستی (kWh، کل اضافہ)",
           "site_export_limit": "سائٹ کی برآمد کی حد اگر سائٹ کی برآمد کی وضاحت کی گئی ہے (kW)",
-          "use_actuals": "توانائی کے ڈیش بورڈ پر دکھانے کے لیے پیش گوئی کی تاریخ"
+          "use_actuals": "توانائی کے ڈیش بورڈ پر دکھانے کے لیے پیش گوئی کی تاریخ",
+          "custom_morning_hours_sensor": "Custom morning hours sensor (min=0, max=24)",
+          "custom_afternoon_hours_sensor": "Custom afternoon hours sensor (min=0, max=24)"
         },
         "description": "سولکاسٹ کنفیگریشن کے اختیارات"
       }

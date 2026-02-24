@@ -55,6 +55,8 @@ KEY1 = "1"
 KEY2 = "2"
 KEY_NO_SITES = "no_sites"
 CUSTOM_HOURS = 2
+CUSTOM_MORNING_HOURS = 11.0
+CUSTOM_AFTERNOON_HOURS = 14.0
 DEFAULT_INPUT1_NO_DAMP: dict[str, Any] = {
     CONF_API_KEY: KEY1,
     API_QUOTA: "20",
@@ -76,6 +78,8 @@ DEFAULT_INPUT1_NO_DAMP: dict[str, Any] = {
     GENERATION_ENTITIES: [],
     SITE_EXPORT_ENTITY: "",
     SITE_EXPORT_LIMIT: 0.0,
+    CUSTOM_MORNING_HOURS_SENSOR: CUSTOM_MORNING_HOURS,
+    CUSTOM_AFTERNOON_HOURS_SENSOR: CUSTOM_AFTERNOON_HOURS,
 }
 
 BAD_INPUT = copy.deepcopy(DEFAULT_INPUT1_NO_DAMP)
@@ -232,7 +236,9 @@ def verify_data_schema(data: dict[str, Any]) -> None:
 
 
 def _check_abend(api_key: str, site: str | None = None, get_sites: bool = False) -> CallbackResult | None:
-    if MOCK_SESSION_CONFIG[MOCK_BUSY] or (MOCK_SESSION_CONFIG[MOCK_BUSY_SITE] and site == MOCK_SESSION_CONFIG[MOCK_BUSY_SITE]):
+    if MOCK_SESSION_CONFIG[MOCK_BUSY] or (
+        MOCK_SESSION_CONFIG[MOCK_BUSY_SITE] and site == MOCK_SESSION_CONFIG[MOCK_BUSY_SITE]
+    ):
         return CallbackResult(status=429, body=STATUS_EMPTY)
     if MOCK_SESSION_CONFIG["api_used"].get(api_key, 0) >= MOCK_SESSION_CONFIG["api_limit"]:
         return CallbackResult(status=429, payload=STATUS_429_OVER)
@@ -347,8 +353,14 @@ async def async_setup_aioresponses() -> None:
 
     URLS: dict[str, dict[str, Any]] = {
         "sites": {"URL": r"https://api\.solcast\.com\.au/rooftop_sites\?.*api_key=.*$", "callback": _get_sites},
-        "forecasts": {"URL": r"https://api\.solcast\.com\.au/rooftop_sites/.+/forecasts.*$", "callback": _get_forecasts},
-        "estimated_actuals": {"URL": r"https://api\.solcast\.com\.au/rooftop_sites/.+/estimated_actuals.*$", "callback": _get_actuals},
+        "forecasts": {
+            "URL": r"https://api\.solcast\.com\.au/rooftop_sites/.+/forecasts.*$",
+            "callback": _get_forecasts,
+        },
+        "estimated_actuals": {
+            "URL": r"https://api\.solcast\.com\.au/rooftop_sites/.+/estimated_actuals.*$",
+            "callback": _get_actuals,
+        },
     }
 
     exc = MOCK_SESSION_CONFIG["exception"]
@@ -482,15 +494,25 @@ async def async_setup_extra_sensors(  # noqa: C901
 
         gap = False
         with freeze_time(
-            now + (timedelta(hours=0) if site == "site_export_sensor" else timedelta(days=entity_history["offset"]) - timedelta(hours=off)),
+            now
+            + (
+                timedelta(hours=0)
+                if site == "site_export_sensor"
+                else timedelta(days=entity_history["offset"]) - timedelta(hours=off)
+            ),
             tz_offset=0,
         ) as frozen_time:
             gen_bumps = {}
-            if site in ("1111-1111-1111-1111", "site_export_sensor"):  # 1111 and site export as a generation-consistent profile
+            if site in (
+                "1111-1111-1111-1111",
+                "site_export_sensor",
+            ):  # 1111 and site export as a generation-consistent profile
                 for i, p in power.items():
                     bumps = p / 0.1
                     if bumps > 0:
-                        bump_seconds = int(1800 / bumps)  # Use a varying period for each bump to reach interval generation
+                        bump_seconds = int(
+                            1800 / bumps
+                        )  # Use a varying period for each bump to reach interval generation
                         bump_times = list(range(0, 1800, bump_seconds))
                         gen_bumps[i] = (bump_times, 0.1)
             else:  # 2222 as a time-consistent profile
@@ -503,8 +525,12 @@ async def async_setup_extra_sensors(  # noqa: C901
             adjust = 0.0
             increase = True
             intervals: list[int] = []
-            for day in range(entity_history["days_generation"] if site != "site_export_sensor" else entity_history["days_export"]):
-                intervals = intervals + list(range(day * 48 + 16, day * 48 + 34))  # Focus on middle of day to reduce history build time
+            for day in range(
+                entity_history["days_generation"] if site != "site_export_sensor" else entity_history["days_export"]
+            ):
+                intervals = intervals + list(
+                    range(day * 48 + 16, day * 48 + 34)
+                )  # Focus on middle of day to reduce history build time
             for interval in intervals:
                 i = interval % 48
                 day = interval // 48
@@ -586,7 +612,9 @@ async def async_setup_extra_sensors(  # noqa: C901
         ) as frozen_time:
             for day in range(entity_history["days_suppression"]):
                 for s in sequence:
-                    frozen_time.move_to(now + timedelta(days=day, hours=s["hours"], minutes=s["minutes"], seconds=s["seconds"]))
+                    frozen_time.move_to(
+                        now + timedelta(days=day, hours=s["hours"], minutes=s["minutes"], seconds=s["seconds"])
+                    )
                     await hass.async_add_executor_job(
                         hass.states.set,
                         entity_id,
@@ -630,7 +658,12 @@ async def async_init_integration(
         options = copy.deepcopy(options)
         options[AUTO_UPDATE] = int(options[AUTO_UPDATE])
     entry = MockConfigEntry(
-        domain=DOMAIN, unique_id="solcast_pv_solar", title="Solcast PV Forecast", data=options, options=options, version=version
+        domain=DOMAIN,
+        unique_id="solcast_pv_solar",
+        title="Solcast PV Forecast",
+        data=options,
+        options=options,
+        version=version,
     )
 
     entry.add_to_hass(hass)
@@ -643,7 +676,9 @@ async def async_init_integration(
 
     # Ensure that a potentially orphaned simple hard limit diagnostic entity is always present.
     entity_registry = er.async_get(hass)
-    entity_registry.async_get_or_create("sensor", DOMAIN, unique_id="solcast_pv_forecast_hard_limit_set", config_entry=entry)
+    entity_registry.async_get_or_create(
+        "sensor", DOMAIN, unique_id="solcast_pv_forecast_hard_limit_set", config_entry=entry
+    )
 
     await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
@@ -654,7 +689,9 @@ async def async_init_integration(
 async def async_cleanup_integration_caches(hass: HomeAssistant, **kwargs: Any) -> bool:
     """Clean up the Solcast Solar integration caches and session."""
 
-    config_dir = f"{hass.config.config_dir}/{CONFIG_DISCRETE_NAME}" if CONFIG_FOLDER_DISCRETE else hass.config.config_dir
+    config_dir = (
+        f"{hass.config.config_dir}/{CONFIG_DISCRETE_NAME}" if CONFIG_FOLDER_DISCRETE else hass.config.config_dir
+    )
 
     def list_files() -> list[str]:
         return [str(cache) for cache in Path(config_dir).glob("solcast*.json")]
@@ -677,7 +714,9 @@ async def async_cleanup_integration_caches(hass: HomeAssistant, **kwargs: Any) -
 async def async_cleanup_integration_tests(hass: HomeAssistant, **kwargs: Any) -> bool:
     """Clean up the Solcast Solar integration caches and session."""
 
-    config_dir = f"{hass.config.config_dir}/{CONFIG_DISCRETE_NAME}" if CONFIG_FOLDER_DISCRETE else hass.config.config_dir
+    config_dir = (
+        f"{hass.config.config_dir}/{CONFIG_DISCRETE_NAME}" if CONFIG_FOLDER_DISCRETE else hass.config.config_dir
+    )
 
     def list_files() -> list[str]:
         return [str(cache) for cache in Path(config_dir).glob("solcast*.json")]

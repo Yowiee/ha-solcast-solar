@@ -55,6 +55,8 @@ from .const import (
     ENTITY_TOTAL_KWH_FORECAST,
     ENTITY_TOTAL_KWH_FORECAST_TODAY,
     ENTITY_TOTAL_KWH_FORECAST_TOMORROW,
+    ENTITY_TOTAL_KWH_FORECAST_TOMORROW_AFTERNOON,
+    ENTITY_TOTAL_KWH_FORECAST_TOMORROW_MORNING,
     FACTORS,
     HARD_LIMIT,
     HARD_LIMIT_API,
@@ -90,6 +92,8 @@ NAMES: Final[dict[str, str]] = {
     ENTITY_POWER_NOW_30M: "Power in 30 Minutes",
     ENTITY_TOTAL_KWH_FORECAST_TODAY: "Forecast Today",
     ENTITY_TOTAL_KWH_FORECAST_TOMORROW: "Forecast Tomorrow",
+    ENTITY_TOTAL_KWH_FORECAST_TOMORROW_AFTERNOON: "Forecast Tomorrow Afternoon",
+    ENTITY_TOTAL_KWH_FORECAST_TOMORROW_MORNING: "Forecast Tomorrow Morning",
 }
 
 SENSORS: Final[dict[str, dict[str, Any]]] = {
@@ -264,6 +268,28 @@ SENSORS: Final[dict[str, dict[str, Any]]] = {
             state_class=SensorStateClass.TOTAL,
         )
     },
+    ENTITY_TOTAL_KWH_FORECAST_TOMORROW_AFTERNOON: {
+        DESCRIPTION: SensorEntityDescription(
+            key=ENTITY_TOTAL_KWH_FORECAST_TOMORROW_AFTERNOON,
+            translation_key=ENTITY_TOTAL_KWH_FORECAST_TOMORROW,
+            device_class=SensorDeviceClass.ENERGY,
+            native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+            name=NAMES[ENTITY_TOTAL_KWH_FORECAST_TOMORROW_AFTERNOON],
+            suggested_display_precision=2,
+            state_class=SensorStateClass.TOTAL,
+        )
+    },
+    ENTITY_TOTAL_KWH_FORECAST_TOMORROW_MORNING: {
+        DESCRIPTION: SensorEntityDescription(
+            key=ENTITY_TOTAL_KWH_FORECAST_TOMORROW_MORNING,
+            translation_key=ENTITY_TOTAL_KWH_FORECAST_TOMORROW_MORNING,
+            device_class=SensorDeviceClass.ENERGY,
+            native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+            name=NAMES[ENTITY_TOTAL_KWH_FORECAST_TOMORROW_MORNING],
+            suggested_display_precision=2,
+            state_class=SensorStateClass.TOTAL,
+        )
+    },
 }
 
 
@@ -371,7 +397,9 @@ async def async_setup_entry(
             }
             sen = SolcastSensor(coordinator, entry, k)
             entities.append(sen)
-        expecting_limits = [f"hard_limit_{api_key_last_six(api_key)}" for api_key in coordinator.solcast.options.api_key.split(",")]
+        expecting_limits = [
+            f"hard_limit_{api_key_last_six(api_key)}" for api_key in coordinator.solcast.options.api_key.split(",")
+        ]
 
     # Clean up.
     entity_registry = er.async_get(hass)
@@ -467,7 +495,9 @@ class SolcastSensor(CoordinatorEntity, SensorEntity):
         await super().async_added_to_hass()
 
         if self.entity_description.key in (ENTITY_LAST_UPDATED, ENTITY_LAST_UPDATED_OLD):
-            self._state_info[UNRECORDED_ATTRIBUTES] = frozenset([AUTO_UPDATE_NEXT, AUTO_UPDATE_DIVISIONS, AUTO_UPDATE_QUEUE])
+            self._state_info[UNRECORDED_ATTRIBUTES] = frozenset(
+                [AUTO_UPDATE_NEXT, AUTO_UPDATE_DIVISIONS, AUTO_UPDATE_QUEUE]
+            )
 
         elif str(self.entity_description.key).startswith(ENTITY_TOTAL_KWH_FORECAST):
             exclude = [DETAILED_FORECAST, DETAILED_HOURLY]

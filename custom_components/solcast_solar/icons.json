@@ -33,7 +33,9 @@
             "total_kwh_forecast_d12": {"default": "mdi:solar-power"},
             "total_kwh_forecast_d13": {"default": "mdi:solar-power"},
             "total_kwh_forecast_today": {"default": "mdi:solar-power"},
-            "total_kwh_forecast_tomorrow": {"default": "mdi:solar-power"}
+            "total_kwh_forecast_tomorrow": {"default": "mdi:solar-power"},
+            "total_kwh_forecast_tomorrow_morning": {"default": "mdi:solar-power"},
+            "total_kwh_forecast_tomorrow_afternoon": {"default": "mdi:solar-power"}
         }
     },
     "services": {
