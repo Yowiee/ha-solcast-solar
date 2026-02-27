@@ -1,6 +1,6 @@
 Hi community!
 
-A Solcast API simulator and unit/integration tests are available for this custom integration. To set up, add these mounts to your HA dev container, adjusting for your local integration fork.
+A Solcast API simulator and unit/integration tests are available for this custom integration. To set up, add these mounts to `.devcontainer/devcontainer.json` in your [HA dev container](https://developers.home-assistant.io/docs/development_environment/), adjusting for your local integration fork.
 
 As a custom component (no simulator, no tests):
 
