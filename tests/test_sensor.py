@@ -23,7 +23,9 @@ from homeassistant.components.solcast_solar.const import (
     BRK_SITE,
     CONFIG_DISCRETE_NAME,
     CONFIG_FOLDER_DISCRETE,
+    CUSTOM_AFTERNOON_HOURS_SENSOR,
     CUSTOM_HOUR_SENSOR,
+    CUSTOM_MORNING_HOURS_SENSOR,
     DEFAULT_FORECAST_DAY_SENSORS,
     DEFAULT_FORECAST_DAYS,
 )
@@ -642,6 +644,9 @@ async def test_sensor_x_hours_long(
 
     finally:
         assert await async_cleanup_integration_tests(hass)
+
+
+# TODO: add test
 
 
 async def test_sensor_unavailable(
