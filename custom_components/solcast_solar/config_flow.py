@@ -514,14 +514,10 @@ class SolcastSolarOptionFlowHandler(OptionsFlow):
                 all_config_data[USE_ACTUALS] = int(user_input.get(USE_ACTUALS, 0))
                 all_config_data[GENERATION_ENTITIES] = user_input.get(GENERATION_ENTITIES, [])
                 all_config_data[AUTO_DAMPEN] = user_input.get(AUTO_DAMPEN, False)
-                all_config_data[SITE_EXPORT_ENTITY] = (
-                    user_input[SITE_EXPORT_ENTITY][0] if user_input.get(SITE_EXPORT_ENTITY) else ""
-                )
+                all_config_data[SITE_EXPORT_ENTITY] = (user_input[SITE_EXPORT_ENTITY][0] if user_input.get(SITE_EXPORT_ENTITY) else "")
                 all_config_data[SITE_EXPORT_LIMIT] = user_input.get(SITE_EXPORT_LIMIT, 0)
                 if not errors:
-                    if int(user_input.get(USE_ACTUALS, 0)) != HistoryType.FORECASTS and not user_input.get(
-                        GET_ACTUALS, False
-                    ):
+                    if int(user_input.get(USE_ACTUALS, 0)) != HistoryType.FORECASTS and not user_input.get(GET_ACTUALS, False):
                         errors[BASE] = EXCEPTION_ACTUALS_WITHOUT_GET
                         _LOGGER.debug("Options validation failed: %s", errors[BASE])
                 if not errors:
@@ -700,9 +696,9 @@ class SolcastSolarOptionFlowHandler(OptionsFlow):
             step_id="dampen",
             data_schema=vol.Schema(
                 {
-                    vol.Required(
-                        f"damp{factor:02d}", description={SUGGESTED_VALUE: extant_factors[f"damp{factor:02d}"]}
-                    ): vol.All(vol.Coerce(float), vol.Range(min=0.0, max=1.0))
+                    vol.Required(f"damp{factor:02d}", description={SUGGESTED_VALUE: extant_factors[f"damp{factor:02d}"]} ): vol.All(
+                        vol.Coerce(float), vol.Range(min=0.0, max=1.0)
+                    )
                     for factor in range(24)
                 }
             ),
