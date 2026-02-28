@@ -2609,30 +2609,6 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         )
         return round(0.5 * estimate, 4) if estimate is not None else None
 
-    def get_total_energy_forecast_part_day(
-        self,
-        n_day: int,
-        site: str | None = None,
-        forecast_confidence: str | None = None,
-        start_utc=get_day_start_utc(future=n_day),
-        end_utc=get_day_start_utc(future=n_day + 1),
-    ) -> float | None:
-        """Return forecast production total for N days ahead.
-
-        Arguments:
-            n_day (int): A day (0 = today, 1 = tomorrow, etc., with a maximum of day FORECAST_DAYS - 1).
-            site (str): An optional Solcast site ID, used to build site breakdown attributes.
-            forecast_confidence (str): A optional forecast type, used to select the pv_estimate, pv_estimate10 or pv_estimate90 returned.
-
-        Returns:
-            float | None: The forecast total solar generation for a given day as kWh.
-        """
-
-        estimate = self.__get_forecast_pv_estimates(
-            start_utc, end_utc, site=site, forecast_confidence=forecast_confidence
-        )
-        return round(0.5 * estimate, 4) if estimate is not None else None
-
     def get_forecast_attributes(self, get_forecast_value: Any, n: int = 0) -> dict[str, Any]:
         """Return forecast attributes for the 'n' forecast value for all sites and individual sites.
 
