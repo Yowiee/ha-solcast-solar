@@ -348,9 +348,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         self._peak_intervals: dict[int, float] = dict.fromkeys(range(48), -1.0)
         self._site_data_forecasts: dict[str, list[dict[str, Any]]] = {}
         self._site_data_forecasts_undampened: dict[str, list[dict[str, Any]]] = {}
-        self._site_latitude: defaultdict[str, dict[str, bool | float | int | None]] = defaultdict(
-            dict[str, bool | float | int | None]
-        )
+        self._site_latitude: defaultdict[str, dict[str, bool | float | int | None]] = defaultdict(dict[str, bool | float | int | None])
         self._sites_hard_limit: defaultdict[str, Any] = defaultdict(dict)
         self._sites_hard_limit_undampened: defaultdict[str, Any] = defaultdict(dict)
         self._sites_actual_hard_limit: defaultdict[str, Any] = defaultdict(dict)
@@ -361,9 +359,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         self._tz = options.tz
         self._use_forecast_confidence = f"pv_{options.key_estimate}"
 
-        self._config_dir = (
-            f"{hass.config.config_dir}/{CONFIG_DISCRETE_NAME}" if CONFIG_FOLDER_DISCRETE else hass.config.config_dir
-        )
+        self._config_dir = f"{hass.config.config_dir}/{CONFIG_DISCRETE_NAME}" if CONFIG_FOLDER_DISCRETE else hass.config.config_dir
         (Path(self._config_dir).mkdir(parents=False, exist_ok=True)) if CONFIG_FOLDER_DISCRETE else None
         _LOGGER.debug("Configuration directory is %s", self._config_dir)
         self.migrate_config_files()
@@ -371,9 +367,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
     def migrate_config_files(self) -> None:
         """Migrate config files to discrete folder if required."""
 
-        source_path = (
-            Path(self._config_dir) / ".." if CONFIG_FOLDER_DISCRETE else Path(self._config_dir) / "solcast_solar"
-        )
+        source_path = Path(self._config_dir) / ".." if CONFIG_FOLDER_DISCRETE else Path(self._config_dir) / "solcast_solar"
         if source_path.exists():
             for file in source_path.glob("solcast*.json"):
                 target_path = Path(self._config_dir) / file.name
@@ -448,7 +442,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             options[SITE_EXPORT_LIMIT],
             options[AUTO_DAMPEN],
             options[CUSTOM_MORNING_HOURS_SENSOR],
-            custom_afternoon_hours_sensor=options[CUSTOM_AFTERNOON_HOURS_SENSOR],
+            options[CUSTOM_AFTERNOON_HOURS_SENSOR],
         )
         self.hard_limit = self.options.hard_limit
         self._use_forecast_confidence = f"pv_{self.options.key_estimate}"
@@ -466,10 +460,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     not alias[DEPRECATED]
                     and (
                         dt.strptime(
-                            alias.get(
-                                STOPS_WORKING,
-                                dt.strftime(dt.now(self.options.tz) - timedelta(days=1), DT_DATE_ONLY_FORMAT),
-                            ),
+                            alias.get(STOPS_WORKING, dt.strftime(dt.now(self.options.tz) - timedelta(days=1), DT_DATE_ONLY_FORMAT)),
                             DT_DATE_ONLY_FORMAT,
                         ).date()
                         > dt.now(self.options.tz).date()
@@ -552,10 +543,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                             response_json = json.loads(content)
                         if not isinstance(response_json, dict):
                             self.tasks[ADVANCED_INVALID_JSON_TASK] = asyncio.create_task(
-                                add_problem_later(
-                                    "Advanced options file invalid format, expected JSON `dict`: %s",
-                                    self._filename_advanced,
-                                )
+                                add_problem_later("Advanced options file invalid format, expected JSON `dict`: %s", self._filename_advanced)
                             )
                             return change
                         options_present = self._advanced_with_aliases(response_json)
@@ -576,10 +564,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                                 if isinstance(new_value, type(value)):
                                     match advanced_options_with_aliases[0][option][ADVANCED_TYPE]:
                                         case ADVANCED_OPTION.INT | ADVANCED_OPTION.FLOAT:
-                                            if (
-                                                new_value < advanced_options_with_aliases[0][option][MINIMUM]
-                                                or new_value > advanced_options_with_aliases[0][option][MAXIMUM]
-                                            ):
+                                            if new_value < advanced_options_with_aliases[0][option][MINIMUM] or new_value > advanced_options_with_aliases[0][option][MAXIMUM]:
                                                 add_problem(
                                                     "Invalid value for advanced option %s: %s (must be %s-%s)",
                                                     option,
@@ -593,53 +578,29 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                                         #        add_problem("Invalid time in advanced option %s: %s", option, new_value)
                                         #        valid = False
                                         case ADVANCED_OPTION.LIST_INT | ADVANCED_OPTION.LIST_TIME:
-                                            member_type = advanced_options_with_aliases[0][option][ADVANCED_TYPE].split(
-                                                "_"
-                                            )[1]
+                                            member_type = advanced_options_with_aliases[0][option][ADVANCED_TYPE].split("_")[1]
                                             seen_members: list[Any] = []
                                             member: Any
                                             for member in new_value:  # pyright: ignore[reportOptionalIterable, reportGeneralTypeIssues]
                                                 if re.match(_VALIDATION[member_type], str(member)) is None:
-                                                    add_problem(
-                                                        "Invalid %s in advanced option %s: %s",
-                                                        member_type,
-                                                        option,
-                                                        member,
-                                                    )
+                                                    add_problem("Invalid %s in advanced option %s: %s", member_type, option, member)
                                                     valid = False
                                                     continue
                                                 if member in seen_members:
-                                                    add_problem(
-                                                        "Duplicate %s in advanced option %s: %s",
-                                                        member_type,
-                                                        option,
-                                                        member,
-                                                    )
+                                                    add_problem("Duplicate %s in advanced option %s: %s", member_type, option, member)
                                                     valid = False
                                                     continue
                                                 seen_members.append(member)
                                         case _:
                                             pass
-                                    if (
-                                        option == ADVANCED_GRANULAR_DAMPENING_DELTA_ADJUSTMENT
-                                        and new_value
-                                        and not self.options.get_actuals
-                                    ):
-                                        add_problem(
-                                            "Granular dampening delta adjustment requires estimated actuals to be fetched"
-                                        )
+                                    if option == ADVANCED_GRANULAR_DAMPENING_DELTA_ADJUSTMENT and new_value and not self.options.get_actuals:
+                                        add_problem("Granular dampening delta adjustment requires estimated actuals to be fetched")
                                         valid = False
                                 else:
-                                    add_problem(
-                                        "Type mismatch for advanced option %s: should be %s",
-                                        option,
-                                        type(value).__name__,
-                                    )
+                                    add_problem("Type mismatch for advanced option %s: should be %s", option, type(value).__name__)
                                     valid = False
                                 if valid:
-                                    advanced_options_proposal[
-                                        advanced_options_with_aliases[0][option][CURRENT_NAME]
-                                    ] = new_value
+                                    advanced_options_proposal[advanced_options_with_aliases[0][option][CURRENT_NAME]] = new_value
                                     if advanced_options_with_aliases[0][option][ADVANCED_TYPE] in (
                                         ADVANCED_OPTION.FLOAT,
                                         ADVANCED_OPTION.INT,
@@ -653,58 +614,30 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     invalid: list[str] = []
                     for option, value in advanced_options_proposal.items():
                         if advanced_options_with_aliases[0][option].get(OPTION_GREATER_THAN_OR_EQUAL) is not None:
-                            if any(
-                                value < advanced_options_proposal[opt]
-                                for opt in advanced_options_with_aliases[0][option][OPTION_GREATER_THAN_OR_EQUAL]
-                            ):
+                            if any(value < advanced_options_proposal[opt] for opt in advanced_options_with_aliases[0][option][OPTION_GREATER_THAN_OR_EQUAL]):
                                 add_problem(
                                     "Advanced option %s: %s must be greater than or equal to the value of %s",
                                     option,
                                     value,
-                                    ", ".join(
-                                        [
-                                            f"{opt} ({advanced_options_proposal[opt]})"
-                                            for opt in advanced_options_with_aliases[0][option][
-                                                OPTION_GREATER_THAN_OR_EQUAL
-                                            ]
-                                        ]
-                                    ),
+                                    ", ".join([f"{opt} ({advanced_options_proposal[opt]})" for opt in advanced_options_with_aliases[0][option][OPTION_GREATER_THAN_OR_EQUAL]]),
                                 )
                                 invalid.append(option)
                         if advanced_options_with_aliases[0][option].get(OPTION_LESS_THAN_OR_EQUAL) is not None:
-                            if any(
-                                value > advanced_options_proposal[opt]
-                                for opt in advanced_options_with_aliases[0][option][OPTION_LESS_THAN_OR_EQUAL]
-                            ):
+                            if any(value > advanced_options_proposal[opt] for opt in advanced_options_with_aliases[0][option][OPTION_LESS_THAN_OR_EQUAL]):
                                 add_problem(
                                     "Advanced option %s: %s must be less than or equal to the value of %s",
                                     option,
                                     value,
-                                    ", ".join(
-                                        [
-                                            f"{opt} ({advanced_options_proposal[opt]})"
-                                            for opt in advanced_options_with_aliases[0][option][
-                                                OPTION_LESS_THAN_OR_EQUAL
-                                            ]
-                                        ]
-                                    ),
+                                    ", ".join([f"{opt} ({advanced_options_proposal[opt]})" for opt in advanced_options_with_aliases[0][option][OPTION_LESS_THAN_OR_EQUAL]]),
                                 )
                                 invalid.append(option)
                         if advanced_options_with_aliases[0][option].get(OPTION_NOT_SET_IF) is not None:
-                            if any(
-                                advanced_options_proposal[opt]
-                                for opt in advanced_options_with_aliases[0][option][OPTION_NOT_SET_IF]
-                            ):
+                            if any(advanced_options_proposal[opt] for opt in advanced_options_with_aliases[0][option][OPTION_NOT_SET_IF]):
                                 add_problem(
                                     "Advanced option %s: %s can not be set with %s",
                                     option,
                                     value,
-                                    ", ".join(
-                                        [
-                                            f"{opt}: {advanced_options_proposal[opt]}"
-                                            for opt in advanced_options_with_aliases[0][option][OPTION_NOT_SET_IF]
-                                        ]
-                                    ),
+                                    ", ".join([f"{opt}: {advanced_options_proposal[opt]}" for opt in advanced_options_with_aliases[0][option][OPTION_NOT_SET_IF]]),
                                 )
                                 invalid.append(option)
 
@@ -712,10 +645,8 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                         default = advanced_options_with_aliases[0][option][DEFAULT]
                         option = advanced_options_with_aliases[0][option][CURRENT_NAME]
                         if option in invalid:
-                            advanced_options_proposal[advanced_options_with_aliases[0][option][CURRENT_NAME]] = (
-                                self.advanced_options.get(
-                                    advanced_options_with_aliases[0][option][CURRENT_NAME], default
-                                )
+                            advanced_options_proposal[advanced_options_with_aliases[0][option][CURRENT_NAME]] = self.advanced_options.get(
+                                advanced_options_with_aliases[0][option][CURRENT_NAME], default
                             )
                             continue
                         if option not in options_present:
@@ -736,11 +667,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                 await raise_or_clear_advanced_deprecated(
                     deprecated_in_use,
                     self.hass,
-                    stops_working={
-                        o: dt.strptime(stops, DT_DATE_ONLY_FORMAT)
-                        for o, stops in advanced_options_with_aliases[1].items()
-                        if stops is not None
-                    },
+                    stops_working={o: dt.strptime(stops, DT_DATE_ONLY_FORMAT) for o, stops in advanced_options_with_aliases[1].items() if stops is not None},
                 )
 
         return change
@@ -926,9 +853,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     "Cached sites are not yet available for %s to cope with API call failure",
                     redact_api_key(api_key),
                 )
-                _LOGGER.error(
-                    "At least one successful API 'get sites' call is needed, so the integration will not function correctly"
-                )
+                _LOGGER.error("At least one successful API 'get sites' call is needed, so the integration will not function correctly")
                 one_only = True
 
         def set_sites(response_json: dict[str, Any], api_key: str) -> None:
@@ -940,9 +865,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             for site in sites_data[SITES]:
                 site[API_KEY] = api_key
                 site.pop(SITE_ATTRIBUTE_LONGITUDE, None)
-                self._site_latitude[site[RESOURCE_ID]][SITE_ATTRIBUTE_LATITUDE] = site.pop(
-                    SITE_ATTRIBUTE_LATITUDE, None
-                )
+                self._site_latitude[site[RESOURCE_ID]][SITE_ATTRIBUTE_LATITUDE] = site.pop(SITE_ATTRIBUTE_LATITUDE, None)
                 self._site_latitude[site[RESOURCE_ID]][SITE_ATTRIBUTE_AZIMUTH] = site[SITE_ATTRIBUTE_AZIMUTH]
             self.sites = self.sites + sites_data[SITES]
             self._api_used_reset[api_key] = None
@@ -995,9 +918,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     url = f"{self.advanced_options[ADVANCED_SOLCAST_URL]}/rooftop_sites"
                     params = {FORMAT: JSON, API_KEY: api_key}
                     _LOGGER.debug("Connecting to %s?format=json&api_key=%s", url, redact_api_key(api_key))
-                    response: ClientResponse = await self._aiohttp_session.get(
-                        url=url, params=params, headers=self.headers, ssl=False
-                    )
+                    response: ClientResponse = await self._aiohttp_session.get(url=url, params=params, headers=self.headers, ssl=False)
                     status = response.status
                     (_LOGGER.debug if status == 200 else _LOGGER.warning)(
                         "HTTP session returned status %s%s",
@@ -1105,9 +1026,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                         api_key_in_error = redact_api_key(api_key)
                         break
                 if error:
-                    _LOGGER.error(
-                        "Suggestion: Check your overall HA configuration, specifically networking related (Is IPV6 an issue for you? DNS? Proxy?)"
-                    )
+                    _LOGGER.error("Suggestion: Check your overall HA configuration, specifically networking related (Is IPV6 an issue for you? DNS? Proxy?)")
             return (
                 200 if self.sites_status == SitesStatus.OK else 999,
                 "Cached sites loaded" if self.sites_status == SitesStatus.OK else "Cached sites not loaded",
@@ -1187,9 +1106,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             self.usage_status = UsageStatus.OK
             api_keys = self.options.api_key.split(",")
             api_quota = self.options.api_quota.split(",")
-            for index in range(
-                len(api_keys)
-            ):  # If only one quota value is present, yet there are multiple sites then use the same quota.
+            for index in range(len(api_keys)):  # If only one quota value is present, yet there are multiple sites then use the same quota.
                 if len(api_quota) < index + 1:
                     api_quota.append(api_quota[index - 1])
             quota = {api_keys[index].strip(): int(api_quota[index].strip()) for index in range(len(api_quota))}
@@ -1258,9 +1175,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         for issue in [ISSUE_UNUSUAL_AZIMUTH_NORTHERN, ISSUE_UNUSUAL_AZIMUTH_SOUTHERN]:
             if (i := issue_registry.async_get_issue(DOMAIN, issue)) is not None:
                 if (
-                    i.dismissed_version is not None
-                    and i.translation_placeholders is not None
-                    and self._dismissal.get(i.translation_placeholders.get(SITE, ""), False)
+                    i.dismissed_version is not None and i.translation_placeholders is not None and self._dismissal.get(i.translation_placeholders.get(SITE, ""), False)
                 ) or not any_unusual:
                     _LOGGER.debug("Remove %sissue for %s", "ignored " if i.dismissed_version is not None else "", issue)
                     ir.async_delete_issue(self.hass, DOMAIN, issue)
@@ -1290,9 +1205,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
 
         def rename(file1: str, file2: str, api_key: str):
             if Path(file1).is_file():
-                _LOGGER.info(
-                    "Renaming %s to %s", redact_msg_api_key(file1, api_key), redact_msg_api_key(file2, api_key)
-                )
+                _LOGGER.info("Renaming %s to %s", redact_msg_api_key(file1, api_key), redact_msg_api_key(file2, api_key))
                 Path(file1).rename(Path(file2))
 
         async def test_unusual_azimuth() -> None:
@@ -1337,11 +1250,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                             and not self._dismissal.get(site, False)
                             else _LOGGER.debug
                         )
-                        log(
-                            redact_lat_lon_simple(
-                                f"Unusual azimuth {azimuth} for site {site}, latitude {v[SITE_ATTRIBUTE_LATITUDE]}"
-                            )
-                        )
+                        log(redact_lat_lon_simple(f"Unusual azimuth {azimuth} for site {site}, latitude {v[SITE_ATTRIBUTE_LATITUDE]}"))
 
                     if unusual and not any_raised and raise_issue != "":
                         if not self._dismissal.get(site, False):
@@ -1384,9 +1293,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                         if site.get(API_KEY) == api_key:
                             break
                     _LOGGER.debug("Re-serialising sites cache for %s", redact_api_key(api_key))
-                    payload = json.dumps(
-                        {SITES: [site for site in self.sites if site.get(API_KEY) == api_key]}, ensure_ascii=False
-                    )
+                    payload = json.dumps({SITES: [site for site in self.sites if site.get(API_KEY) == api_key]}, ensure_ascii=False)
                     async with self._serialise_lock, aiofiles.open(cache_filename, "w") as file:
                         await file.write(payload)
 
@@ -1408,11 +1315,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             single_sites = f"{self._config_dir}/solcast-sites.json"
             if not Path(single_sites).is_file():
                 rename(f"{self._config_dir}/solcast-sites-{api_keys[0]}.json", single_sites, api_keys[0])
-                rename(
-                    f"{self._config_dir}/solcast-usage-{api_keys[0]}.json",
-                    f"{self._config_dir}/solcast-usage.json",
-                    api_keys[0],
-                )
+                rename(f"{self._config_dir}/solcast-usage-{api_keys[0]}.json", f"{self._config_dir}/solcast-usage.json", api_keys[0])
 
         def remove_orphans(all_cached: list[str], multi_cached: list[str]):
             """Remove orphaned cache files."""
@@ -1422,10 +1325,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     if component_parts is not None:
                         _LOGGER.warning(
                             "Removing orphaned %s",
-                            component_parts.group(1)
-                            + "******"
-                            + component_parts.group(3)[-6:]
-                            + component_parts.group(4),
+                            component_parts.group(1) + "******" + component_parts.group(3)[-6:] + component_parts.group(4),
                         )
                         Path(file).unlink()
 
@@ -1441,9 +1341,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
 
         async def load_extant_sites_and_usage(sites: list[str], usages: list[str]):
             extant_sites: dict[str, list[dict[str, Any]]] = defaultdict(list)  # Existing sites in caches
-            extant_usage: dict[str, dict[str, Any]] = defaultdict(
-                dict
-            )  # Existing usage in caches, separated by API key
+            extant_usage: dict[str, dict[str, Any]] = defaultdict(dict)  # Existing usage in caches, separated by API key
             single_key = None
             for site in sites:
                 async with aiofiles.open(site) as file:
@@ -1536,9 +1434,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         """
 
         def option(enable: bool, set_allow_reset: bool = False):
-            site_damp = (
-                self.entry_options.get(SITE_DAMP, False) if self.entry_options.get(SITE_DAMP) is not None else False
-            )
+            site_damp = self.entry_options.get(SITE_DAMP, False) if self.entry_options.get(SITE_DAMP) is not None else False
             if enable ^ site_damp:
                 options = {**self.entry_options}
                 options[SITE_DAMP] = enable
@@ -1568,11 +1464,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     error = True
                     return option(GRANULAR_DAMPENING_OFF, SET_ALLOW_RESET)
                 self.granular_dampening = cast(dict[str, Any], response_json)
-                if (
-                    content.replace("\n", "").replace("\r", "").strip() != ""
-                    and isinstance(response_json, dict)
-                    and self.granular_dampening
-                ):
+                if content.replace("\n", "").replace("\r", "").strip() != "" and isinstance(response_json, dict) and self.granular_dampening:
                     first_site_len = 0
                     for site, damp_list in self.granular_dampening.items():
                         if first_site_len == 0:
@@ -1755,18 +1647,14 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                                     # Need one or the other to be able to upgrade.
                                     self.status = SolcastApiStatus.DATA_INCOMPATIBLE
                                 if data.get(SITE_INFO) is not None:
-                                    if not isinstance(
-                                        data.get(SITE_INFO, {}).get(self.sites[0][RESOURCE_ID], {}).get(FORECASTS), list
-                                    ):
+                                    if not isinstance(data.get(SITE_INFO, {}).get(self.sites[0][RESOURCE_ID], {}).get(FORECASTS), list):
                                         self.status = SolcastApiStatus.DATA_INCOMPATIBLE
                                 if data.get(FORECASTS) is not None:
                                     if not isinstance(data.get(FORECASTS), list):
                                         self.status = SolcastApiStatus.DATA_INCOMPATIBLE
                                 if self.status == SolcastApiStatus.DATA_INCOMPATIBLE:
                                     _LOGGER.critical("The %s appears incompatible, so cannot upgrade it", filename)
-                                    raise_and_record(
-                                        self.hass, ConfigEntryError, EXCEPTION_INIT_INCOMPATIBLE, {"file": file}
-                                    )
+                                    raise_and_record(self.hass, ConfigEntryError, EXCEPTION_INIT_INCOMPATIBLE, {"file": file})
 
                                 # What happened before v4 stays before v4. BJReplay has no visibility of ancient.
                                 # V3 and prior versions of the solcast.json file did not have a version key.
@@ -1781,14 +1669,8 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                                     data[LAST_ATTEMPT] = data[LAST_UPDATED]
                                     data[AUTO_UPDATED] = self.options.auto_update != AutoUpdate.NONE
                                     if data.get(SITE_INFO) is None:
-                                        if (
-                                            data.get(FORECASTS) is not None
-                                            and len(self.sites) > 0
-                                            and self.sites[0].get(RESOURCE_ID) is not None
-                                        ):
-                                            data[SITE_INFO] = {
-                                                self.sites[0][RESOURCE_ID]: {FORECASTS: data.get(FORECASTS)}
-                                            }
+                                        if data.get(FORECASTS) is not None and len(self.sites) > 0 and self.sites[0].get(RESOURCE_ID) is not None:
+                                            data[SITE_INFO] = {self.sites[0][RESOURCE_ID]: {FORECASTS: data.get(FORECASTS)}}
                                             data.pop(FORECASTS, None)
                                             data.pop("energy", None)
                                     json_version = 5
@@ -1843,19 +1725,13 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     reset_usage = False
                     new_sites: dict[str, str] = {}
                     cache_sites = list(self._data[SITE_INFO].keys())
-                    old_api_keys = (
-                        self.hass.data[DOMAIN]
-                        .get(OLD_API_KEY, self.hass.data[DOMAIN][ENTRY_OPTIONS].get(CONF_API_KEY, ""))
-                        .split(",")
-                    )
+                    old_api_keys = self.hass.data[DOMAIN].get(OLD_API_KEY, self.hass.data[DOMAIN][ENTRY_OPTIONS].get(CONF_API_KEY, "")).split(",")
                     for site in self.sites:
                         api_key = site[API_KEY]
                         site = site[RESOURCE_ID]
                         if site not in cache_sites or len(self._data[SITE_INFO][site].get(FORECASTS, [])) == 0:
                             new_sites[site] = api_key
-                            if (
-                                api_key not in old_api_keys
-                            ):  # If a new site is seen in conjunction with an API key change then reset the usage.
+                            if api_key not in old_api_keys:  # If a new site is seen in conjunction with an API key change then reset the usage.
                                 reset_usage = True
                     with contextlib.suppress(Exception):
                         del self.hass.data[DOMAIN][OLD_API_KEY]
@@ -1934,11 +1810,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     if generation_data:
                         self._data_generation = generation_data
                     # If configured to get generation but there is no cached data, then get it.
-                    if (
-                        self.options.auto_dampen
-                        and self.options.generation_entities
-                        and len(self._data_generation[GENERATION]) == 0
-                    ):
+                    if self.options.auto_dampen and self.options.generation_entities and len(self._data_generation[GENERATION]) == 0:
                         await self.get_pv_generation()
                     # Check for sites changes.
                     await adds_moves_changes()
@@ -1954,9 +1826,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
 
                 if not self._loaded_data:
                     # No file to load.
-                    _LOGGER.warning(
-                        "There is no solcast.json to load, so fetching solar forecast, including past forecasts"
-                    )
+                    _LOGGER.warning("There is no solcast.json to load, so fetching solar forecast, including past forecasts")
                     # Could be a brand new install of the integration, or the file has been removed. Get the forecast and past actuals.
                     self.status_message = await self.get_forecast_update(do_past_hours=168)
                     if self.status_message != "":
@@ -2061,12 +1931,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             args (tuple): Not used.
         """
         _LOGGER.debug("Action to delete old solcast json files")
-        for filename in [
-            self._filename,
-            self._filename_undampened,
-            self._filename_actuals,
-            self._filename_actuals_dampened,
-        ]:
+        for filename in [self._filename, self._filename_undampened, self._filename_actuals, self._filename_actuals_dampened]:
             if Path(filename).is_file():
                 Path(filename).unlink()
             else:
@@ -2087,9 +1952,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         if args[2] == ALL:
             data_forecasts = self._data_forecasts if not args[3] else self._data_forecasts_undampened
         else:
-            data_forecasts = (
-                self._site_data_forecasts[args[2]] if not args[3] else self._site_data_forecasts_undampened[args[2]]
-            )
+            data_forecasts = self._site_data_forecasts[args[2]] if not args[3] else self._site_data_forecasts_undampened[args[2]]
         start_index, end_index = self.__get_list_slice(data_forecasts, args[0], args[1], search_past=True)
         if start_index == 0 and end_index == 0:
             # Range could not be found
@@ -2189,11 +2052,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         return (
             self.options.auto_dampen
             or self.granular_dampening != {}
-            or (
-                not self.options.auto_dampen
-                and self.granular_dampening == {}
-                and sum(self.options.dampening.values()) != 24
-            )
+            or (not self.options.auto_dampen and self.granular_dampening == {} and sum(self.options.dampening.values()) != 24)
         )
 
     def get_rooftop_site_total_today(self, site: str) -> float | None:
@@ -2328,9 +2187,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         def get_start_and_end(forecasts: list[dict[str, Any]]) -> tuple[int, int, dt, dt]:
             start_utc = self.get_day_start_utc(future=future_day)
             start, _ = self.__get_list_slice(forecasts, start_utc)
-            end_utc = min(
-                self.get_day_start_utc(future=future_day + 1), forecasts[-1][PERIOD_START]
-            )  # Don't go past the last forecast.
+            end_utc = min(self.get_day_start_utc(future=future_day + 1), forecasts[-1][PERIOD_START])  # Don't go past the last forecast.
             end, _ = self.__get_list_slice(forecasts, end_utc)
             if not start:
                 # Data is missing, so adjust the start time to the first available forecast.
@@ -2345,13 +2202,9 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         if self.options.attr_brk_site_detailed:
             for site in self.sites:
                 site_start_index, site_end_index, _, _ = get_start_and_end(self._site_data_forecasts[site[RESOURCE_ID]])
-                site_data_forecast[site[RESOURCE_ID]] = self._site_data_forecasts[site[RESOURCE_ID]][
-                    site_start_index:site_end_index
-                ]
+                site_data_forecast[site[RESOURCE_ID]] = self._site_data_forecasts[site[RESOURCE_ID]][site_start_index:site_end_index]
 
-        _tuple = [
-            {**forecast, PERIOD_START: forecast[PERIOD_START].astimezone(self._tz)} for forecast in forecast_slice
-        ]
+        _tuple = [{**forecast, PERIOD_START: forecast[PERIOD_START].astimezone(self._tz)} for forecast in forecast_slice]
         tuples: dict[str, list[dict[str, Any]]] = {}
         if self.options.attr_brk_site_detailed:
             for site in self.sites:
@@ -2388,9 +2241,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             result[DETAILED_HOURLY] = hourly_tuple
             if self.options.attr_brk_site_detailed:
                 for site in self.sites:
-                    result[f"{DETAILED_HOURLY}_{site[RESOURCE_ID].replace('-', '_')}"] = hourly_tuples[
-                        site[RESOURCE_ID]
-                    ]
+                    result[f"{DETAILED_HOURLY}_{site[RESOURCE_ID].replace('-', '_')}"] = hourly_tuples[site[RESOURCE_ID]]
         return result
 
     def get_forecast_n_hour(
@@ -2411,9 +2262,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         """
         start_utc = self.get_hour_start_utc() + timedelta(hours=n_hour)
         end_utc = start_utc + timedelta(hours=1)
-        estimate = self.__get_forecast_pv_estimates(
-            start_utc, end_utc, site=site, forecast_confidence=forecast_confidence
-        )
+        estimate = self.__get_forecast_pv_estimates(start_utc, end_utc, site=site, forecast_confidence=forecast_confidence)
         return round(500 * estimate) if estimate is not None else None
 
     def get_forecast_custom_hours(
@@ -2535,9 +2384,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         forecast_confidence = self._use_forecast_confidence if forecast_confidence is None else forecast_confidence
         start_utc = self.get_day_start_utc(future=n_day)
         end_utc = self.get_day_start_utc(future=n_day + 1)
-        result = self.__get_max_forecast_pv_estimate(
-            start_utc, end_utc, site=site, forecast_confidence=forecast_confidence
-        )
+        result = self.__get_max_forecast_pv_estimate(start_utc, end_utc, site=site, forecast_confidence=forecast_confidence)
         return int(round(1000 * result[forecast_confidence])) if result is not None else None
 
     def get_peak_time_day(
@@ -2558,14 +2405,10 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         """
         start_utc = self.get_day_start_utc(future=n_day)
         end_utc = self.get_day_start_utc(future=n_day + 1)
-        result = self.__get_max_forecast_pv_estimate(
-            start_utc, end_utc, site=site, forecast_confidence=forecast_confidence
-        )
+        result = self.__get_max_forecast_pv_estimate(start_utc, end_utc, site=site, forecast_confidence=forecast_confidence)
         return result[PERIOD_START].astimezone(self._tz) if result is not None else None
 
-    def get_forecast_remaining_today(
-        self, n: int = 0, site: str | None = None, forecast_confidence: str | None = None
-    ) -> float | None:
+    def get_forecast_remaining_today(self, n: int = 0, site: str | None = None, forecast_confidence: str | None = None) -> float | None:
         """Return remaining forecasted production for today.
 
         Arguments:
@@ -2604,9 +2447,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         """
         start_utc = self.get_day_start_utc(future=n_day)
         end_utc = self.get_day_start_utc(future=n_day + 1)
-        estimate = self.__get_forecast_pv_estimates(
-            start_utc, end_utc, site=site, forecast_confidence=forecast_confidence
-        )
+        estimate = self.__get_forecast_pv_estimates(start_utc, end_utc, site=site, forecast_confidence=forecast_confidence)
         return round(0.5 * estimate, 4) if estimate is not None else None
 
     def get_forecast_attributes(self, get_forecast_value: Any, n: int = 0) -> dict[str, Any]:
@@ -2624,17 +2465,13 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             for site in self.sites:
                 result[site[RESOURCE_ID].replace("-", "_")] = get_forecast_value(n, site=site[RESOURCE_ID])
                 for forecast_confidence in self.estimate_set:
-                    result[forecast_confidence.replace("pv_", "") + "_" + site[RESOURCE_ID].replace("-", "_")] = (
-                        get_forecast_value(
-                            n,
-                            site=site[RESOURCE_ID],
-                            forecast_confidence=forecast_confidence,
-                        )
+                    result[forecast_confidence.replace("pv_", "") + "_" + site[RESOURCE_ID].replace("-", "_")] = get_forecast_value(
+                        n,
+                        site=site[RESOURCE_ID],
+                        forecast_confidence=forecast_confidence,
                     )
         for forecast_confidence in self.estimate_set:
-            result[forecast_confidence.replace("pv_", "")] = get_forecast_value(
-                n, forecast_confidence=forecast_confidence
-            )
+            result[forecast_confidence.replace("pv_", "")] = get_forecast_value(n, forecast_confidence=forecast_confidence)
         return result
 
     def __get_list_slice(
@@ -2733,10 +2570,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                 spline[forecast_confidence][spline_index] = 0.0
             # Suppress spline bounce.
             if reducing:
-                if (
-                    spline_index + 1 <= len(xx) - 1
-                    and spline[forecast_confidence][spline_index + 1] > spline[forecast_confidence][spline_index]
-                ):
+                if spline_index + 1 <= len(xx) - 1 and spline[forecast_confidence][spline_index + 1] > spline[forecast_confidence][spline_index]:
                     spline[forecast_confidence][spline_index + 1] = spline[forecast_confidence][spline_index]
             else:
                 y_index = int(math.floor(interval / 1800))  # Every half hour
@@ -2775,9 +2609,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     xx = list(range(0, 1800 * len(self._spline_period), 300))
                 else:
                     # Data is missing at the start of the set, so adjust the start time to the first available forecast.
-                    start, end = self.__get_list_slice(
-                        forecasts, forecasts[0][PERIOD_START], self.get_day_start_utc(future=1)
-                    )
+                    start, end = self.__get_list_slice(forecasts, forecasts[0][PERIOD_START], self.get_day_start_utc(future=1))
                     xx = list(range(1800 * (48 - (end - start)), 1800 * len(self._spline_period), 300))
             except IndexError:
                 start = 0
@@ -2833,9 +2665,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         variant: list[float] | None = self._forecasts_moment[ALL if site is None else site].get(
             self._use_forecast_confidence if forecast_confidence is None else forecast_confidence
         )
-        offset = (
-            (len(self._spline_period) * 6 - len(variant)) + 3 if variant is not None else 0
-        )  # To cater for less intervals than the spline period
+        offset = (len(self._spline_period) * 6 - len(variant)) + 3 if variant is not None else 0  # To cater for less intervals than the spline period
         return variant[int(n_min / 300) - offset] if variant and len(variant) > 0 else None
 
     def __get_remaining(self, site: str | None, forecast_confidence: str | None, n_min: float) -> float | None:
@@ -2852,9 +2682,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         variant: list[float] | None = self._forecasts_remaining[ALL if site is None else site].get(
             self._use_forecast_confidence if forecast_confidence is None else forecast_confidence
         )
-        offset = (
-            (len(self._spline_period) * 6 - len(variant)) + 3 if variant is not None else 0
-        )  # To cater for less intervals than the spline period
+        offset = (len(self._spline_period) * 6 - len(variant)) + 3 if variant is not None else 0  # To cater for less intervals than the spline period
         return variant[int(n_min / 300) - offset] if variant and len(variant) > 0 else None
 
     def __get_forecast_pv_remaining(
@@ -2892,9 +2720,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             end_utc = end_utc.replace(minute=math.floor(end_utc.minute / 5) * 5)
             if end_utc < day_start + timedelta(seconds=1800 * len(self._spline_period)) and result is not None:
                 # End is within today so use spline data.
-                if (
-                    val := self.__get_remaining(site, forecast_confidence, (end_utc - day_start).total_seconds())
-                ) is not None:
+                if (val := self.__get_remaining(site, forecast_confidence, (end_utc - day_start).total_seconds())) is not None:
                     result -= val
             elif result is not None:
                 # End is beyond today, so revert to simple linear interpolation.
@@ -3002,9 +2828,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         """
         return self._data_energy_dashboard
 
-    def __get_conversion_factor(
-        self, entity: str, entity_history: list[State] | None = None, is_export: bool = False
-    ) -> float:
+    def __get_conversion_factor(self, entity: str, entity_history: list[State] | None = None, is_export: bool = False) -> float:
         """Get the conversion factor for an electricity energy entity to convert to kWh."""
 
         energy_unit_factors = {
@@ -3035,19 +2859,11 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
 
         conversion_factor = energy_unit_factors.get(entity_unit)
         if conversion_factor is None:
-            _LOGGER.error(
-                "%s %s has an unsupported %s '%s', assuming kWh",
-                entity_type,
-                entity,
-                ATTR_UNIT_OF_MEASUREMENT,
-                entity_unit,
-            )
+            _LOGGER.error("%s %s has an unsupported %s '%s', assuming kWh", entity_type, entity, ATTR_UNIT_OF_MEASUREMENT, entity_unit)
             return 1.0
 
         if conversion_factor != 1.0:
-            _LOGGER.debug(
-                "%s %s uses %s, applying conversion factor %s", entity_type, entity, entity_unit, conversion_factor
-            )
+            _LOGGER.debug("%s %s uses %s, applying conversion factor %s", entity_type, entity, entity_unit, conversion_factor)
 
         return conversion_factor
 
@@ -3065,23 +2881,14 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         _ALL = ("on", "off", "1", "0", "true", "false", "True", "False")
 
         # Load the generation history.
-        generation: dict[dt, dict[str, Any]] = {
-            generated[PERIOD_START]: generated for generated in self._data_generation[GENERATION]
-        }
-        days = (
-            1
-            if len(generation) > 0
-            else self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_GENERATION_HISTORY_LOAD_DAYS]
-        )
+        generation: dict[dt, dict[str, Any]] = {generated[PERIOD_START]: generated for generated in self._data_generation[GENERATION]}
+        days = 1 if len(generation) > 0 else self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_GENERATION_HISTORY_LOAD_DAYS]
 
         entity_registry = er.async_get(self.hass)
 
         for day in range(days):
             # PV generation
-            generation_intervals: dict[dt, float] = {
-                self.get_day_start_utc(future=(-1 * day)) - timedelta(days=1) + timedelta(minutes=minute): 0
-                for minute in range(0, 1440, 30)
-            }
+            generation_intervals: dict[dt, float] = {self.get_day_start_utc(future=(-1 * day)) - timedelta(days=1) + timedelta(minutes=minute): 0 for minute in range(0, 1440, 30)}
             for entity in self.options.generation_entities:
                 r_entity = entity_registry.async_get(entity)
                 if r_entity is None:
@@ -3104,36 +2911,21 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     conversion_factor = self.__get_conversion_factor(entity, entity_history[entity], is_export=False)
                     # Arrange the generation samples into half-hour intervals.
                     sample_time: list[dt] = [
-                        e.last_updated.astimezone(datetime.UTC).replace(
-                            minute=e.last_updated.astimezone(datetime.UTC).minute // 30 * 30, second=0, microsecond=0
-                        )
+                        e.last_updated.astimezone(datetime.UTC).replace(minute=e.last_updated.astimezone(datetime.UTC).minute // 30 * 30, second=0, microsecond=0)
                         for e in entity_history[entity]
                         if e.state.replace(".", "").isnumeric()
                     ]
                     # Build a list of generation delta values.
                     sample_generation: list[float] = [
                         0.0,
-                        *diff(
-                            [
-                                float(e.state) * conversion_factor
-                                for e in entity_history[entity]
-                                if e.state.replace(".", "").isnumeric()
-                            ]
-                        ),
+                        *diff([float(e.state) * conversion_factor for e in entity_history[entity] if e.state.replace(".", "").isnumeric()]),
                     ]
-                    sample_generation_time: list[dt] = [
-                        e.last_updated.astimezone(datetime.UTC)
-                        for e in entity_history[entity]
-                        if e.state.replace(".", "").isnumeric()
-                    ]
+                    sample_generation_time: list[dt] = [e.last_updated.astimezone(datetime.UTC) for e in entity_history[entity] if e.state.replace(".", "").isnumeric()]
                     sample_timedelta: list[int] = [
                         0,
                         *diff(
                             [
-                                (
-                                    e.last_updated.astimezone(datetime.UTC)
-                                    - (self.get_day_start_utc(future=(-1 * day)) - timedelta(days=1))
-                                ).total_seconds()
+                                (e.last_updated.astimezone(datetime.UTC) - (self.get_day_start_utc(future=(-1 * day)) - timedelta(days=1))).total_seconds()
                                 for e in entity_history[entity]
                                 if e.state.replace(".", "").isnumeric()
                             ]
@@ -3159,14 +2951,8 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     # Build generation values for each interval, ignoring any excessive jumps.
                     ignored: dict[dt, bool] = {}
                     last_interval: dt | None = None
-                    if (
-                        len(sample_time) == len(sample_generation)
-                        and len(sample_time) == len(sample_generation_time)
-                        and len(sample_time) == len(sample_timedelta)
-                    ):
-                        for interval, kWh, report_time, time_delta in zip(
-                            sample_time, sample_generation, sample_generation_time, sample_timedelta, strict=True
-                        ):
+                    if len(sample_time) == len(sample_generation) and len(sample_time) == len(sample_generation_time) and len(sample_time) == len(sample_timedelta):
+                        for interval, kWh, report_time, time_delta in zip(sample_time, sample_generation, sample_generation_time, sample_timedelta, strict=True):
                             if interval != last_interval:
                                 # Only check the first sample of each interval for an excessive jump
                                 last_interval = interval
@@ -3208,10 +2994,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             for i, gen in generation_intervals.items():
                 generation_intervals[i] = round(gen, 3)
 
-            export_limiting: dict[dt, bool] = {
-                self.get_day_start_utc(future=(-1 * day)) - timedelta(days=1) + timedelta(minutes=minute): False
-                for minute in range(0, 1440, 30)
-            }
+            export_limiting: dict[dt, bool] = {self.get_day_start_utc(future=(-1 * day)) - timedelta(days=1) + timedelta(minutes=minute): False for minute in range(0, 1440, 30)}
 
             # Identify intervals intentionally disabled by the user.
             platforms = [PLATFORM_BINARY_SENSOR, PLATFORM_SENSOR, PLATFORM_SWITCH]
@@ -3249,9 +3032,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     for e in entity_history[entity]:
                         if e.state not in _ALL:
                             continue
-                        interval = e.last_updated.astimezone(datetime.UTC).replace(
-                            minute=e.last_updated.astimezone(datetime.UTC).minute // 30 * 30, second=0, microsecond=0
-                        )
+                        interval = e.last_updated.astimezone(datetime.UTC).replace(minute=e.last_updated.astimezone(datetime.UTC).minute // 30 * 30, second=0, microsecond=0)
                         if e.state in _ON:
                             state = True
                             if not entity_state.get(interval):
@@ -3279,10 +3060,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                             state = entity_state[interval]
                         export_limiting[interval] = state
                         if state:
-                            _LOGGER.debug(
-                                "Auto-dampen suppressed for interval %s",
-                                interval.astimezone(self._tz).strftime("%Y-%m-%d %H:%M"),
-                            )
+                            _LOGGER.debug("Auto-dampen suppressed for interval %s", interval.astimezone(self._tz).strftime("%Y-%m-%d %H:%M"))
 
             # Detect site export limiting
             if self.options.site_export_limit > 0 and self.options.site_export_entity != "":
@@ -3297,8 +3075,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     _LOGGER.error("Site export entity %s is disabled, please enable it", entity)
                     entity = ""
                 export_intervals: dict[dt, float] = {
-                    self.get_day_start_utc(future=(-1 * day)) - timedelta(days=1) + timedelta(minutes=minute): 0
-                    for minute in range(0, 1440, _INTERVAL)
+                    self.get_day_start_utc(future=(-1 * day)) - timedelta(days=1) + timedelta(minutes=minute): 0 for minute in range(0, 1440, _INTERVAL)
                 }
                 if entity:
                     entity_history = await get_instance(self.hass).async_add_executor_job(
@@ -3310,29 +3087,17 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     )
                     if entity_history.get(entity) and len(entity_history[entity]):
                         # Get the conversion factor for the entity to convert to kWh.
-                        conversion_factor = self.__get_conversion_factor(
-                            entity, entity_history[entity], is_export=False
-                        )
+                        conversion_factor = self.__get_conversion_factor(entity, entity_history[entity], is_export=False)
                         # Arrange the site export samples into intervals.
                         sample_time: list[dt] = [
-                            e.last_updated.astimezone(datetime.UTC).replace(
-                                minute=e.last_updated.astimezone(datetime.UTC).minute // _INTERVAL * _INTERVAL,
-                                second=0,
-                                microsecond=0,
-                            )
+                            e.last_updated.astimezone(datetime.UTC).replace(minute=e.last_updated.astimezone(datetime.UTC).minute // _INTERVAL * _INTERVAL, second=0, microsecond=0)
                             for e in entity_history[entity]
                             if e.state.replace(".", "").isnumeric()
                         ]
                         # Build a list of export delta values.
                         sample_export: list[float] = [
                             0.0,
-                            *diff(
-                                [
-                                    float(e.state) * conversion_factor
-                                    for e in entity_history[entity]
-                                    if e.state.replace(".", "").isnumeric()
-                                ]
-                            ),
+                            *diff([float(e.state) * conversion_factor for e in entity_history[entity] if e.state.replace(".", "").isnumeric()]),
                         ]
                         for interval, kWh in zip(sample_time, sample_export, strict=True):
                             export_intervals[interval] += kWh
@@ -3348,12 +3113,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                         _LOGGER.debug("No site export history found for %s", entity)
 
             # Add recent generation intervals to the history.
-            generation.update(
-                {
-                    i: {PERIOD_START: i, GENERATION: generated, EXPORT_LIMITING: export_limiting[i]}
-                    for i, generated in generation_intervals.items()
-                }
-            )
+            generation.update({i: {PERIOD_START: i, GENERATION: generated, EXPORT_LIMITING: export_limiting[i]} for i, generated in generation_intervals.items()})
 
         # Trim, sort and serialise.
         self._data_generation = {
@@ -3373,10 +3133,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         """Adjust a forecast/actual interval as standard time."""
         offset = 1 if self.is_interval_dst(interval) else 0
         return (
-            (
-                (interval[PERIOD_START].astimezone(self._tz).hour - offset) * 2
-                + interval[PERIOD_START].astimezone(self._tz).minute // 30
-            )
+            ((interval[PERIOD_START].astimezone(self._tz).hour - offset) * 2 + interval[PERIOD_START].astimezone(self._tz).minute // 30)
             if interval[PERIOD_START].astimezone(self._tz).hour - offset >= 0
             else 0
         )
@@ -3384,11 +3141,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
     def adjusted_interval_dt(self, interval: dt) -> int:
         """Adjust a datetime as standard time."""
         offset = 1 if self.dst(interval.astimezone(self._tz)) else 0
-        return (
-            ((interval.astimezone(self._tz).hour - offset) * 2 + interval.astimezone(self._tz).minute // 30)
-            if interval.astimezone(self._tz).hour - offset >= 0
-            else 0
-        )
+        return ((interval.astimezone(self._tz).hour - offset) * 2 + interval.astimezone(self._tz).minute // 30) if interval.astimezone(self._tz).hour - offset >= 0 else 0
 
     async def model_automated_dampening(self, force: bool = False) -> None:  # noqa: C901
         """Model the automated dampening of the forecast data.
@@ -3401,9 +3154,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         deal_breaker = ""
         deal_breaker_site = ""
         actuals: OrderedDict[dt, float] = OrderedDict()
-        if (
-            self.options.auto_dampen or self.advanced_options[ADVANCED_GRANULAR_DAMPENING_DELTA_ADJUSTMENT]
-        ) and self.options.get_actuals:
+        if (self.options.auto_dampen or self.advanced_options[ADVANCED_GRANULAR_DAMPENING_DELTA_ADJUSTMENT]) and self.options.get_actuals:
             _LOGGER.debug("Determining peak estimated actual intervals")
             for site in self.sites:
                 if self._data_actuals[SITE_INFO].get(site[RESOURCE_ID]) is None:
@@ -3415,15 +3166,11 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     continue
                 start, end = self.__get_list_slice(
                     self._data_actuals[SITE_INFO][site[RESOURCE_ID]][FORECASTS],
-                    self.get_day_start_utc()
-                    - timedelta(days=self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MODEL_DAYS]),
+                    self.get_day_start_utc() - timedelta(days=self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MODEL_DAYS]),
                     self.get_day_start_utc(),
                     search_past=True,
                 )
-                site_actuals = {
-                    actual[PERIOD_START]: actual
-                    for actual in self._data_actuals[SITE_INFO][site[RESOURCE_ID]][FORECASTS][start:end]
-                }
+                site_actuals = {actual[PERIOD_START]: actual for actual in self._data_actuals[SITE_INFO][site[RESOURCE_ID]][FORECASTS][start:end]}
                 for period_start, actual in site_actuals.items():
                     extant: float | None = actuals.get(period_start)
                     if extant is not None:
@@ -3449,11 +3196,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                 deal_breaker = "No generation yet"
 
         if deal_breaker != "":
-            _LOGGER.info(
-                "Auto-dampening suppressed: %s%s",
-                deal_breaker,
-                f" for {deal_breaker_site}" if deal_breaker_site != "" else "",
-            )
+            _LOGGER.info("Auto-dampening suppressed: %s%s", deal_breaker, f" for {deal_breaker_site}" if deal_breaker_site != "" else "")
             return
 
         ignored_intervals: list[int] = []  # Intervals to ignore in local time zone
@@ -3464,16 +3207,12 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
 
         export_limited_intervals = dict.fromkeys(range(50), False)
         if not self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_NO_LIMITING_CONSISTENCY]:
-            for gen in self._data_generation[GENERATION][
-                -1 * self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MODEL_DAYS] * 48 :
-            ]:
+            for gen in self._data_generation[GENERATION][-1 * self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MODEL_DAYS] * 48 :]:
                 if gen[EXPORT_LIMITING]:
                     export_limited_intervals[self.adjusted_interval(gen)] = True
 
         generation: dict[dt, float] = {}
-        for gen in self._data_generation[GENERATION][
-            -1 * self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MODEL_DAYS] * 48 :
-        ]:
+        for gen in self._data_generation[GENERATION][-1 * self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MODEL_DAYS] * 48 :]:
             if not self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_NO_LIMITING_CONSISTENCY]:
                 if not export_limited_intervals[self.adjusted_interval(gen)]:
                     generation[gen[PERIOD_START]] = gen[GENERATION]
@@ -3484,10 +3223,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         matching_intervals: dict[int, list[dt]] = {i: [] for i in range(48)}
         for period_start, actual in actuals.items():
             interval = self.adjusted_interval_dt(period_start)
-            if (
-                actual
-                > self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_SIMILAR_PEAK] * self._peak_intervals[interval]
-            ):
+            if actual > self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_SIMILAR_PEAK] * self._peak_intervals[interval]:
                 matching_intervals[interval].append(period_start)
 
         # Defaults.
@@ -3497,26 +3233,14 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         for interval, matching in matching_intervals.items():
             # Get current factor if required
             if self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_PRESERVE_UNMATCHED_FACTORS]:
-                prior_factor = (
-                    self.granular_dampening[ALL][interval] if self.granular_dampening.get(ALL) is not None else 1.0
-                )
+                prior_factor = self.granular_dampening[ALL][interval] if self.granular_dampening.get(ALL) is not None else 1.0
 
-            dst_offset = (
-                1
-                if self.dst(
-                    dt.now(self._tz).replace(hour=interval // 2, minute=30 * (interval % 2), second=0, microsecond=0)
-                )
-                else 0
-            )
+            dst_offset = 1 if self.dst(dt.now(self._tz).replace(hour=interval // 2, minute=30 * (interval % 2), second=0, microsecond=0)) else 0
             interval_time = f"{interval // 2 + (dst_offset):02}:{30 * (interval % 2):02}"
             if interval + dst_offset * 2 in ignored_intervals:
                 _LOGGER.debug("Interval %s is intentionally ignored, skipping", interval_time)
                 continue
-            generation_samples: list[float] = [
-                round(generation.get(timestamp, 0.0), 3)
-                for timestamp in matching
-                if generation.get(timestamp, 0.0) != 0.0
-            ]
+            generation_samples: list[float] = [round(generation.get(timestamp, 0.0), 3) for timestamp in matching if generation.get(timestamp, 0.0) != 0.0]
             preserve_this_interval = False
             if len(matching) > 0:
                 msg = ""
@@ -3530,31 +3254,16 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                 )
                 match self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MODEL]:
                     case 1 | 2 | 3:
-                        if (
-                            len(matching)
-                            >= self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_INTERVALS]
-                        ):
-                            actual_samples: list[float] = [
-                                actuals.get(timestamp, 0.0)
-                                for timestamp in matching
-                                if generation.get(timestamp, 0.0) != 0.0
-                            ]
+                        if len(matching) >= self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_INTERVALS]:
+                            actual_samples: list[float] = [actuals.get(timestamp, 0.0) for timestamp in matching if generation.get(timestamp, 0.0) != 0.0]
                             _LOGGER.debug(
                                 "Selected %d estimated actuals for %s: %s",
                                 len(actual_samples),
                                 interval_time,
                                 ", ".join(f"{act:.3f}" for act in actual_samples),
                             )
-                            _LOGGER.debug(
-                                "Selected %d generation records for %s: %s",
-                                len(generation_samples),
-                                interval_time,
-                                generation_samples,
-                            )
-                            if (
-                                len(generation_samples)
-                                >= self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_GENERATION]
-                            ):
+                            _LOGGER.debug("Selected %d generation records for %s: %s", len(generation_samples), interval_time, generation_samples)
+                            if len(generation_samples) >= self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_GENERATION]:
                                 if len(actual_samples) == len(generation_samples):
                                     raw_factors: list[float] = []
                                     for act, gen in zip(actual_samples, generation_samples, strict=True):
@@ -3572,11 +3281,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                                         case 3:  # min factor from matched pairs
                                             factor = min(raw_factors)
                                     factor = round(factor, 3) if factor > 0 else 1.0
-                                    if (
-                                        self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_INSIGNIFICANT_FACTOR]
-                                        <= factor
-                                        < 1.0
-                                    ):
+                                    if self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_INSIGNIFICANT_FACTOR] <= factor < 1.0:
                                         msg = f"Ignoring insignificant factor for {interval_time} of {factor:.3f}"
                                         factor = 1.0
                                     else:
@@ -3589,31 +3294,15 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                                 )
                             else:
                                 msg = f"Not enough reliable generation samples for {interval_time} to determine dampening ({len(generation_samples)})"
-                                preserve_this_interval = self.advanced_options[
-                                    ADVANCED_AUTOMATED_DAMPENING_PRESERVE_UNMATCHED_FACTORS
-                                ]
+                                preserve_this_interval = self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_PRESERVE_UNMATCHED_FACTORS]
                     case _:
                         peak = max(generation_samples) if len(generation_samples) > 0 else 0.0
                         _LOGGER.debug("Interval %s max generation: %.3f, %s", interval_time, peak, generation_samples)
-                        if (
-                            len(matching)
-                            >= self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_INTERVALS]
-                        ):
+                        if len(matching) >= self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_INTERVALS]:
                             if peak < self._peak_intervals[interval]:
-                                if (
-                                    len(generation_samples)
-                                    >= self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_GENERATION]
-                                ):
-                                    factor = (
-                                        (peak / self._peak_intervals[interval])
-                                        if self._peak_intervals[interval] != 0
-                                        else 1.0
-                                    )
-                                    if (
-                                        self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_INSIGNIFICANT_FACTOR]
-                                        <= factor
-                                        < 1.0
-                                    ):
+                                if len(generation_samples) >= self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_GENERATION]:
+                                    factor = (peak / self._peak_intervals[interval]) if self._peak_intervals[interval] != 0 else 1.0
+                                    if self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_INSIGNIFICANT_FACTOR] <= factor < 1.0:
                                         msg = f"Ignoring insignificant factor for {interval_time} of {factor:.3f}"
                                         factor = 1.0
                                     else:
@@ -3621,23 +3310,19 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                                     dampening[interval] = round(factor, 3)
                                 else:
                                     msg = f"Not enough reliable generation samples for {interval_time} to determine dampening ({len(generation_samples)})"
-                                    preserve_this_interval = self.advanced_options[
-                                        ADVANCED_AUTOMATED_DAMPENING_PRESERVE_UNMATCHED_FACTORS
-                                    ]
+                                    preserve_this_interval = self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_PRESERVE_UNMATCHED_FACTORS]
                             else:
                                 log_msg = False
 
                 if not preserve_this_interval:
                     msg = (
                         f"Not enough matching intervals for {interval_time} to determine dampening"
-                        if len(matching)
-                        < self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_INTERVALS]
+                        if len(matching) < self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_INTERVALS]
                         else msg
                     )
                     preserve_this_interval = (
                         self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_PRESERVE_UNMATCHED_FACTORS]
-                        and len(matching)
-                        < self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_INTERVALS]
+                        and len(matching) < self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MINIMUM_MATCHING_INTERVALS]
                     )
 
                 if preserve_this_interval:
@@ -3680,11 +3365,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                 )
                 await self.tasks[TASK_ACTUALS_FETCH]
             finally:
-                act_response = (
-                    self.tasks.pop(TASK_ACTUALS_FETCH).result()
-                    if self.tasks.get(TASK_ACTUALS_FETCH) is not None
-                    else None
-                )
+                act_response = self.tasks.pop(TASK_ACTUALS_FETCH).result() if self.tasks.get(TASK_ACTUALS_FETCH) is not None else None
             if not isinstance(act_response, dict):
                 _LOGGER.error("No valid data was returned for estimated_actuals so this may cause issues")
                 _LOGGER.error("API did not return a json object, returned `%s`", act_response)
@@ -3694,14 +3375,10 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
 
             estimate_actuals: list[dict[str, Any]] = act_response.get(ESTIMATED_ACTUALS, [])
 
-            oldest = (
-                dt.now(self._tz).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=6)
-            ).astimezone(datetime.UTC)
+            oldest = (dt.now(self._tz).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=6)).astimezone(datetime.UTC)
 
             for estimate_actual in estimate_actuals:
-                period_start = dt.fromisoformat(estimate_actual[PERIOD_END]).astimezone(datetime.UTC).replace(
-                    second=0, microsecond=0
-                ) - timedelta(minutes=30)
+                period_start = dt.fromisoformat(estimate_actual[PERIOD_END]).astimezone(datetime.UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
                 if period_start > oldest:
                     new_data.append(
                         {
@@ -3723,9 +3400,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     round(actual[ESTIMATE], 4),
                 )
 
-            await self.sort_and_prune(
-                site[RESOURCE_ID], self._data_actuals, self.advanced_options[ADVANCED_HISTORY_MAX_DAYS], actuals
-            )
+            await self.sort_and_prune(site[RESOURCE_ID], self._data_actuals, self.advanced_options[ADVANCED_HISTORY_MAX_DAYS], actuals)
             _LOGGER.debug("Estimated actuals dictionary for site %s length %s", site[RESOURCE_ID], len(actuals))
 
         if status == DataCallStatus.SUCCESS and dampen_yesterday:
@@ -3750,14 +3425,10 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     actuals_undampened_day = [
                         actual
                         for actual in self._data_actuals[SITE_INFO][site[RESOURCE_ID]][FORECASTS]
-                        if actual[PERIOD_START] >= self.get_day_start_utc(future=-1)
-                        and actual[PERIOD_START] < self.get_day_start_utc()
+                        if actual[PERIOD_START] >= self.get_day_start_utc(future=-1) and actual[PERIOD_START] < self.get_day_start_utc()
                     ]
                     extant_actuals = (
-                        {
-                            actual[PERIOD_START]: actual
-                            for actual in self._data_actuals_dampened[SITE_INFO][site[RESOURCE_ID]][FORECASTS]
-                        }
+                        {actual[PERIOD_START]: actual for actual in self._data_actuals_dampened[SITE_INFO][site[RESOURCE_ID]][FORECASTS]}
                         if self._data_actuals_dampened[SITE_INFO].get(site[RESOURCE_ID])
                         else {}
                     )
@@ -3765,11 +3436,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     for actual in actuals_undampened_day:
                         period_start = actual[PERIOD_START]
                         undampened = actual[ESTIMATE]
-                        factor = self.__get_dampening_factor(
-                            site[RESOURCE_ID],
-                            period_start.astimezone(self._tz),
-                            undampened_interval_pv50.get(period_start, -1.0),
-                        )
+                        factor = self.__get_dampening_factor(site[RESOURCE_ID], period_start.astimezone(self._tz), undampened_interval_pv50.get(period_start, -1.0))
                         dampened = round(undampened * factor, 4)
                         forecast_entry_update(
                             extant_actuals,
@@ -3867,16 +3534,8 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                 data[LAST_UPDATED] = dt.now(datetime.UTC).replace(microsecond=0)
                 data[LAST_ATTEMPT] = last_attempt
                 # Set to divisions if auto update is enabled, but not forced, in which case set to 99999 (otherwise zero).
-                data[AUTO_UPDATED] = (
-                    self.auto_update_divisions
-                    if self.options.auto_update != AutoUpdate.NONE and not force
-                    else 0
-                    if not force
-                    else 99999
-                )
-                return await self.serialise_data(
-                    data, self._filename if data == self._data else self._filename_undampened
-                )
+                data[AUTO_UPDATED] = self.auto_update_divisions if self.options.auto_update != AutoUpdate.NONE and not force else 0 if not force else 99999
+                return await self.serialise_data(data, self._filename if data == self._data else self._filename_undampened)
 
             s_status = await set_metadata_and_serialise(self._data)
             await set_metadata_and_serialise(self._data_undampened)
@@ -3904,10 +3563,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         past_days = self.get_day_start_utc(future=-14)
         for site in self.sites:
             site = site[RESOURCE_ID]
-            if (
-                not self._data_undampened[SITE_INFO].get(site)
-                or len(self._data_undampened[SITE_INFO][site].get(FORECASTS, [])) == 0
-            ):
+            if not self._data_undampened[SITE_INFO].get(site) or len(self._data_undampened[SITE_INFO][site].get(FORECASTS, [])) == 0:
                 _LOGGER.info(
                     "Migrating un-dampened history to %s for %s",
                     self._filename_undampened,
@@ -3922,11 +3578,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             # Migrate forecast history if un-dampened data does not yet exist.
             if len(forecasts[site]) > 0:
                 forecasts_undampened = sorted(
-                    {
-                        forecast[PERIOD_START]: forecast
-                        for forecast in self._data[SITE_INFO][site][FORECASTS]
-                        if forecast[PERIOD_START] >= past_days
-                    }.values(),
+                    {forecast[PERIOD_START]: forecast for forecast in self._data[SITE_INFO][site][FORECASTS] if forecast[PERIOD_START] >= past_days}.values(),
                     key=itemgetter(PERIOD_START),
                 )
                 _LOGGER.debug(
@@ -3944,63 +3596,30 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             await self.apply_forward_dampening(applicable_sites=apply_dampening)
             await self.serialise_data(self._data, self._filename)
 
-    def __get_dampening_granular_factor(
-        self, site: str, period_start: dt, interval_pv50: float = -1.0, record_adjustment: bool = False
-    ) -> float:
+    def __get_dampening_granular_factor(self, site: str, period_start: dt, interval_pv50: float = -1.0, record_adjustment: bool = False) -> float:
         """Retrieve a granular dampening factor."""
-        factor = self.granular_dampening[site][
-            period_start.hour
-            if len(self.granular_dampening[site]) == 24
-            else ((period_start.hour * 2) + (1 if period_start.minute > 0 else 0))
-        ]
-        if (
-            site == ALL
-            and (self.options.auto_dampen or self.advanced_options[ADVANCED_GRANULAR_DAMPENING_DELTA_ADJUSTMENT])
-            and self.granular_dampening.get(ALL)
-        ):
+        factor = self.granular_dampening[site][period_start.hour if len(self.granular_dampening[site]) == 24 else ((period_start.hour * 2) + (1 if period_start.minute > 0 else 0))]
+        if site == ALL and (self.options.auto_dampen or self.advanced_options[ADVANCED_GRANULAR_DAMPENING_DELTA_ADJUSTMENT]) and self.granular_dampening.get(ALL):
             interval = self.adjusted_interval_dt(period_start)
             factor = min(1.0, self.granular_dampening[ALL][interval])
-            if (
-                not self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_NO_DELTA_ADJUSTMENT]
-                and self._peak_intervals[interval] > 0
-                and interval_pv50 > 0
-                and factor < 1.0
-            ):
+            if not self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_NO_DELTA_ADJUSTMENT] and self._peak_intervals[interval] > 0 and interval_pv50 > 0 and factor < 1.0:
                 interval_time = period_start.astimezone(self._tz).strftime(DT_DATE_FORMAT)
                 factor_pre_adjustment = factor
 
                 match self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_DELTA_ADJUSTMENT_MODEL]:
                     case 1:
                         # Adjust the factor based on forecast vs. peak interval using squared ratio
-                        factor = max(
-                            factor,
-                            factor + ((1.0 - factor) * ((1.0 - (interval_pv50 / self._peak_intervals[interval])) ** 2)),
-                        )
+                        factor = max(factor, factor + ((1.0 - factor) * ((1.0 - (interval_pv50 / self._peak_intervals[interval])) ** 2)))
                     case _:
                         # Adjust the factor based on forecast vs. peak interval delta-logarithmically.
                         factor = max(
                             factor,
-                            min(
-                                1.0,
-                                factor
-                                + (
-                                    (1.0 - factor)
-                                    * (math.log(self._peak_intervals[interval]) - math.log(interval_pv50))
-                                ),
-                            ),
+                            min(1.0, factor + ((1.0 - factor) * (math.log(self._peak_intervals[interval]) - math.log(interval_pv50)))),
                         )
-                if (
-                    record_adjustment
-                    and period_start.astimezone(self._tz).date() == dt.now(self._tz).date()
-                    and round(factor, 3) != round(factor_pre_adjustment, 3)
-                ):
+                if record_adjustment and period_start.astimezone(self._tz).date() == dt.now(self._tz).date() and round(factor, 3) != round(factor_pre_adjustment, 3):
                     _LOGGER.debug(
                         "%sdjusted granular dampening factor for %s, %.3f (was %.3f, peak %.3f, interval pv50 %.3f)",
-                        "Ignoring insignificant a"
-                        if self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_INSIGNIFICANT_FACTOR_ADJUSTED]
-                        <= factor
-                        < 1.0
-                        else "A",
+                        "Ignoring insignificant a" if self.advanced_options[ADVANCED_AUTOMATED_DAMPENING_INSIGNIFICANT_FACTOR_ADJUSTED] <= factor < 1.0 else "A",
                         interval_time,
                         factor,
                         factor_pre_adjustment,
@@ -4012,16 +3631,12 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
 
         return min(1.0, factor)
 
-    def __get_dampening_factor(
-        self, site: str | None, period_start: dt, interval_pv50: float, record_adjustment: bool = False
-    ) -> float:
+    def __get_dampening_factor(self, site: str | None, period_start: dt, interval_pv50: float, record_adjustment: bool = False) -> float:
         """Retrieve either a traditional or granular dampening factor."""
         if site is not None:
             if self.entry_options.get(SITE_DAMP):
                 if self.granular_dampening.get(ALL):
-                    return self.__get_dampening_granular_factor(
-                        ALL, period_start, interval_pv50, record_adjustment=record_adjustment
-                    )
+                    return self.__get_dampening_granular_factor(ALL, period_start, interval_pv50, record_adjustment=record_adjustment)
                 if self.granular_dampening.get(site):
                     return self.__get_dampening_granular_factor(site, period_start)
                 return 1.0
@@ -4032,11 +3647,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         if len(self._data_undampened[SITE_INFO]) > 0:
             _LOGGER.debug("Applying future dampening")
 
-            self._auto_dampening_factors = {
-                period_start: factor
-                for period_start, factor in self._auto_dampening_factors.items()
-                if period_start >= self.get_day_start_utc()
-            }
+            self._auto_dampening_factors = {period_start: factor for period_start, factor in self._auto_dampening_factors.items() if period_start >= self.get_day_start_utc()}
 
             undampened_interval_pv50: dict[dt, float] = {}
             for site in self.sites:
@@ -4058,23 +3669,14 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     for forecast in self._data_undampened[SITE_INFO][site[RESOURCE_ID]][FORECASTS]
                     if forecast[PERIOD_START]
                     >= (
-                        self.get_day_start_utc()
-                        if self._data[SITE_INFO].get(site[RESOURCE_ID])
-                        else self.get_day_start_utc() - timedelta(hours=do_past_hours)
+                        self.get_day_start_utc() if self._data[SITE_INFO].get(site[RESOURCE_ID]) else self.get_day_start_utc() - timedelta(hours=do_past_hours)
                     )  # Was >= dt.now(datetime.UTC)
                 ]
                 forecasts = (
-                    {
-                        forecast[PERIOD_START]: forecast
-                        for forecast in self._data[SITE_INFO][site[RESOURCE_ID]][FORECASTS]
-                    }
-                    if self._data[SITE_INFO].get(site[RESOURCE_ID])
-                    else {}
+                    {forecast[PERIOD_START]: forecast for forecast in self._data[SITE_INFO][site[RESOURCE_ID]][FORECASTS]} if self._data[SITE_INFO].get(site[RESOURCE_ID]) else {}
                 )
 
-                if site[RESOURCE_ID] not in self.options.exclude_sites and (
-                    (site[RESOURCE_ID] in applicable_sites) if applicable_sites else True
-                ):
+                if site[RESOURCE_ID] not in self.options.exclude_sites and ((site[RESOURCE_ID] in applicable_sites) if applicable_sites else True):
                     # Apply dampening to forward data
                     for forecast in sorted(forecasts_undampened_future, key=itemgetter(PERIOD_START)):
                         period_start = forecast[PERIOD_START]
@@ -4109,13 +3711,9 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                             round(forecast[ESTIMATE90], 4),
                         )
 
-                await self.sort_and_prune(
-                    site[RESOURCE_ID], self._data, self.advanced_options[ADVANCED_HISTORY_MAX_DAYS], forecasts
-                )
+                await self.sort_and_prune(site[RESOURCE_ID], self._data, self.advanced_options[ADVANCED_HISTORY_MAX_DAYS], forecasts)
 
-    async def sort_and_prune(
-        self, site: str | None, data: dict[str, Any], past_days: int, forecasts: dict[Any, Any]
-    ) -> None:
+    async def sort_and_prune(self, site: str | None, data: dict[str, Any], past_days: int, forecasts: dict[Any, Any]) -> None:
         """Sort and prune a forecast list."""
 
         _past_days = self.get_day_start_utc(future=past_days * -1)
@@ -4176,30 +3774,20 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                     )
                     await self.tasks[TASK_FORECASTS_FETCH]
                 finally:
-                    act_response = (
-                        self.tasks.pop(TASK_FORECASTS_FETCH).result()
-                        if self.tasks.get(TASK_FORECASTS_FETCH) is not None
-                        else None
-                    )
+                    act_response = self.tasks.pop(TASK_FORECASTS_FETCH).result() if self.tasks.get(TASK_FORECASTS_FETCH) is not None else None
                 if not isinstance(act_response, dict):
                     failure = True
-                    _LOGGER.error(
-                        "No valid data was returned for estimated_actuals so this will cause issues (API limit may be exhausted, or Solcast might have a problem)"
-                    )
+                    _LOGGER.error("No valid data was returned for estimated_actuals so this will cause issues (API limit may be exhausted, or Solcast might have a problem)")
                     _LOGGER.error("API did not return a json object, returned `%s`", act_response)
                     return DataCallStatus.FAIL, "No valid json returned"
 
                 estimate_actuals: list[dict[str, Any]] = act_response.get(ESTIMATED_ACTUALS, [])
 
-                oldest = (
-                    dt.now(self._tz).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=6)
-                ).astimezone(datetime.UTC)
+                oldest = (dt.now(self._tz).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=6)).astimezone(datetime.UTC)
 
                 actuals: dict[dt, Any] = {}
                 for estimate_actual in estimate_actuals:
-                    period_start = dt.fromisoformat(estimate_actual[PERIOD_END]).astimezone(datetime.UTC).replace(
-                        second=0, microsecond=0
-                    ) - timedelta(minutes=30)
+                    period_start = dt.fromisoformat(estimate_actual[PERIOD_END]).astimezone(datetime.UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
                     if period_start > oldest:
                         new_data.append(
                             {
@@ -4219,9 +3807,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                         round(actual[ESTIMATE], 4),
                     )
 
-                await self.sort_and_prune(
-                    site, self._data_actuals, self.advanced_options[ADVANCED_HISTORY_MAX_DAYS], actuals
-                )
+                await self.sort_and_prune(site, self._data_actuals, self.advanced_options[ADVANCED_HISTORY_MAX_DAYS], actuals)
 
                 self._data_actuals[LAST_UPDATED] = dt.now(datetime.UTC).replace(microsecond=0)
                 self._data_actuals[LAST_ATTEMPT] = dt.now(datetime.UTC).replace(microsecond=0)
@@ -4244,11 +3830,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                 )
                 await self.tasks[TASK_FORECASTS_FETCH]
             finally:
-                response = (
-                    self.tasks.pop(TASK_FORECASTS_FETCH).result()
-                    if self.tasks.get(TASK_FORECASTS_FETCH) is not None
-                    else None
-                )
+                response = self.tasks.pop(TASK_FORECASTS_FETCH).result() if self.tasks.get(TASK_FORECASTS_FETCH) is not None else None
             if response is None:
                 _LOGGER.error("No data was returned for forecasts")
 
@@ -4262,9 +3844,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             _LOGGER.debug("%d records returned", len(latest_forecasts))
 
             for forecast in latest_forecasts:
-                period_start = dt.fromisoformat(forecast[PERIOD_END]).astimezone(datetime.UTC).replace(
-                    second=0, microsecond=0
-                ) - timedelta(minutes=30)
+                period_start = dt.fromisoformat(forecast[PERIOD_END]).astimezone(datetime.UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
                 if period_start < last_day:
                     new_data.append(
                         {
@@ -4279,9 +3859,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
 
             # Load the forecast history.
             try:
-                forecasts_undampened = {
-                    forecast[PERIOD_START]: forecast for forecast in self._data_undampened[SITE_INFO][site][FORECASTS]
-                }
+                forecasts_undampened = {forecast[PERIOD_START]: forecast for forecast in self._data_undampened[SITE_INFO][site][FORECASTS]}
             except:  # noqa: E722
                 forecasts_undampened = {}
 
@@ -4303,8 +3881,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                 failure
                 and (
                     self._data_undampened[SITE_INFO].get(site) is None
-                    or self._data_undampened[SITE_INFO][site][FORECASTS][0][PERIOD_START]
-                    > dt.now(datetime.UTC) - timedelta(hours=1)
+                    or self._data_undampened[SITE_INFO][site][FORECASTS][0][PERIOD_START] > dt.now(datetime.UTC) - timedelta(hours=1)
                 )
                 and issue_registry.async_get_issue(DOMAIN, ISSUE_RECORDS_MISSING_INITIAL) is None
             ):
@@ -4404,9 +3981,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                             counter += 1
                             response_text = ""
                             try:
-                                response: ClientResponse = await self._aiohttp_session.get(
-                                    url=url, params=params, headers=self.headers, ssl=False
-                                )
+                                response: ClientResponse = await self._aiohttp_session.get(url=url, params=params, headers=self.headers, ssl=False)
                                 _LOGGER.debug("Fetch data url %s", redact_msg_api_key(str(response.url), api_key))
                                 status = response.status
                                 if status == 200:
@@ -4445,9 +4020,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                                             await self.__serialise_usage(api_key)
                                             break
                                         status = 1000
-                                        _LOGGER.warning(
-                                            "An unexpected error occurred: %s", response_status.get(MESSAGE)
-                                        )
+                                        _LOGGER.warning("An unexpected error occurred: %s", response_status.get(MESSAGE))
                                         break
                                 else:
                                     received_429 += 1
@@ -4488,13 +4061,9 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                             )
                             return response_json
                         elif status in (400, 404):  # noqa: RET505
-                            _LOGGER.error(
-                                "Unexpected error getting sites, status %s returned", http_status_translate(status)
-                            )
+                            _LOGGER.error("Unexpected error getting sites, status %s returned", http_status_translate(status))
                         elif status == 403:  # Forbidden.
-                            _LOGGER.error(
-                                "API key %s is forbidden, re-authentication required", redact_api_key(api_key)
-                            )
+                            _LOGGER.error("API key %s is forbidden, re-authentication required", redact_api_key(api_key))
                             self.reauth_required = True
                         elif status == 998:  # Exceeded API limit.
                             _LOGGER.error(
@@ -4513,10 +4082,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                             )
                             _LOGGER.debug("HTTP session status %s", http_status_translate(status))
 
-                            if (
-                                received_429 == tries
-                                and issue_registry.async_get_issue(DOMAIN, ISSUE_API_UNAVAILABLE) is None
-                            ):
+                            if received_429 == tries and issue_registry.async_get_issue(DOMAIN, ISSUE_API_UNAVAILABLE) is None:
                                 _LOGGER.debug("Raise issue for %s", ISSUE_API_UNAVAILABLE)
                                 ir.async_create_issue(
                                     self.hass,
@@ -4565,14 +4131,8 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                                 forecast[self._use_forecast_confidence] > 0
                                 or self._data_forecasts[index - 1][self._use_forecast_confidence] > 0
                                 or self._data_forecasts[index + 1][self._use_forecast_confidence] > 0
-                                or (
-                                    forecast[PERIOD_START].minute == 30
-                                    and self._data_forecasts[index - 2][self._use_forecast_confidence] > 0.2
-                                )
-                                or (
-                                    forecast[PERIOD_START].minute == 30
-                                    and self._data_forecasts[index + 2][self._use_forecast_confidence] > 0.2
-                                )
+                                or (forecast[PERIOD_START].minute == 30 and self._data_forecasts[index - 2][self._use_forecast_confidence] > 0.2)
+                                or (forecast[PERIOD_START].minute == 30 and self._data_forecasts[index + 2][self._use_forecast_confidence] > 0.2)
                             )
                         }.items()
                     )
@@ -4580,11 +4140,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             }
 
         # Show estimated actuals on Energy dashboard, so combine past estimated actuals with forecast start of today onwards
-        _data = (
-            self._data_estimated_actuals
-            if self.options.use_actuals == HistoryType.ESTIMATED_ACTUALS
-            else self._data_estimated_actuals_dampened
-        )
+        _data = self._data_estimated_actuals if self.options.use_actuals == HistoryType.ESTIMATED_ACTUALS else self._data_estimated_actuals_dampened
         forecasts_start, _ = self.__get_list_slice(self._data_forecasts, self.get_day_start_utc(), search_past=True)
         actuals_start, actuals_end = self.__get_list_slice(
             _data,
@@ -4618,14 +4174,8 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                                 forecast[ESTIMATE] > 0
                                 or self._data_forecasts[index - 1][ESTIMATE] > 0
                                 or self._data_forecasts[index + 1][ESTIMATE] > 0
-                                or (
-                                    forecast[PERIOD_START].minute == 30
-                                    and self._data_forecasts[index - 2][ESTIMATE] > 0.2
-                                )
-                                or (
-                                    forecast[PERIOD_START].minute == 30
-                                    and self._data_forecasts[index + 2][ESTIMATE] > 0.2
-                                )
+                                or (forecast[PERIOD_START].minute == 30 and self._data_forecasts[index - 2][ESTIMATE] > 0.2)
+                                or (forecast[PERIOD_START].minute == 30 and self._data_forecasts[index + 2][ESTIMATE] > 0.2)
                             )
                         }
                     ).items()
@@ -4702,10 +4252,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             for api_key, sites in api_key_sites.items():
                 hard_limit = self.__hard_limit_for_key(api_key)
                 _api_key = redact_api_key(api_key) if multi_key else ALL
-                siteinfo = {
-                    site: {forecast[PERIOD_START]: forecast for forecast in data[SITE_INFO][site][FORECASTS]}
-                    for site in sites
-                }
+                siteinfo = {site: {forecast[PERIOD_START]: forecast for forecast in data[SITE_INFO][site][FORECASTS]} for site in sites}
                 earliest: dt = dt.now(self._tz)
                 latest: dt = earliest
                 for limits in sites.values():
@@ -4731,9 +4278,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                         dt.strftime(latest.astimezone(self._tz), DT_DATE_FORMAT),
                         data_set,
                     )
-                periods: list[dt] = [
-                    earliest + timedelta(minutes=30 * x) for x in range(int((latest - earliest).total_seconds() / 1800))
-                ]
+                periods: list[dt] = [earliest + timedelta(minutes=30 * x) for x in range(int((latest - earliest).total_seconds() / 1800))]
                 sites_hard_limit[api_key] = {est: {} for est in estimates}
                 for count, period in enumerate(periods):
                     for pv_estimate in estimates:
@@ -4741,11 +4286,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                         total_estimate = sum(estimate[site] for site in sites if estimate[site] is not None)
                         if total_estimate == 0:
                             continue
-                        sites_hard_limit[api_key][pv_estimate][period] = {
-                            site: estimate[site] / total_estimate * hard_limit
-                            for site in sites
-                            if estimate[site] is not None
-                        }
+                        sites_hard_limit[api_key][pv_estimate][period] = {site: estimate[site] / total_estimate * hard_limit for site in sites if estimate[site] is not None}
                     # Prevent blocking
                     if count % 200 == 0:
                         await asyncio.sleep(0)
@@ -4767,9 +4308,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         Returns:
             bool: A flag indicating success or failure.
         """
-        commencing: datetime.date = dt.now(self._tz).date() - timedelta(
-            days=self.advanced_options[ADVANCED_HISTORY_MAX_DAYS]
-        )
+        commencing: datetime.date = dt.now(self._tz).date() - timedelta(days=self.advanced_options[ADVANCED_HISTORY_MAX_DAYS])
         last_day: datetime.date = dt.now(self._tz).date()
 
         actuals: dict[dt, dict[str, dt | float]] = {}
@@ -4854,12 +4393,8 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                 return []
 
         start_time = time.time()
-        self._data_estimated_actuals = await build_data_actuals(
-            self._data_actuals, commencing, actuals, self._sites_actual_hard_limit_undampened
-        )
-        self._data_estimated_actuals_dampened = await build_data_actuals(
-            self._data_actuals_dampened, commencing, actuals_dampened, self._sites_actual_hard_limit, dampened=True
-        )
+        self._data_estimated_actuals = await build_data_actuals(self._data_actuals, commencing, actuals, self._sites_actual_hard_limit_undampened)
+        self._data_estimated_actuals_dampened = await build_data_actuals(self._data_actuals_dampened, commencing, actuals_dampened, self._sites_actual_hard_limit, dampened=True)
         _LOGGER.debug("Task build_data_actuals took %.3f seconds", time.time() - start_time)
         self._data_energy_dashboard = self.__make_energy_dict()
 
@@ -4874,13 +4409,9 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
         TALLY = "tally"
 
         today: datetime.date = dt.now(self._tz).date()
-        commencing: datetime.date = dt.now(self._tz).date() - timedelta(
-            days=self.advanced_options[ADVANCED_HISTORY_MAX_DAYS]
-        )
+        commencing: datetime.date = dt.now(self._tz).date() - timedelta(days=self.advanced_options[ADVANCED_HISTORY_MAX_DAYS])
         commencing_undampened: datetime.date = dt.now(self._tz).date() - timedelta(days=14)
-        last_day: datetime.date = dt.now(self._tz).date() + timedelta(
-            days=self.advanced_options[ADVANCED_FORECAST_FUTURE_DAYS]
-        )
+        last_day: datetime.date = dt.now(self._tz).date() + timedelta(days=self.advanced_options[ADVANCED_FORECAST_FUTURE_DAYS])
         logged_hard_limit: list[str] = []
 
         forecasts: dict[dt, dict[str, dt | float]] = {}
@@ -4946,9 +4477,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                                         tally += (
                                             min(
                                                 forecast[self._use_forecast_confidence],
-                                                sites_hard_limit[api_key][self._use_forecast_confidence]
-                                                .get(period_start, {})
-                                                .get(resource_id, 100),
+                                                sites_hard_limit[api_key][self._use_forecast_confidence].get(period_start, {}).get(resource_id, 100),
                                             )
                                             * 0.5
                                         )
@@ -4963,18 +4492,9 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                                     else:
                                         forecasts[period_start] = {
                                             PERIOD_START: period_start,
-                                        } | {
-                                            est: site_forecasts[period_start][est]
-                                            for est in (ESTIMATE, ESTIMATE10, ESTIMATE90)
-                                        }
-                                        if (
-                                            dampened
-                                            and self.options.auto_dampen
-                                            and period_start >= self.get_day_start_utc()
-                                        ):
-                                            forecasts[period_start][DAMPENING_FACTOR] = round(
-                                                self._auto_dampening_factors[period_start], 4
-                                            )
+                                        } | {est: site_forecasts[period_start][est] for est in (ESTIMATE, ESTIMATE10, ESTIMATE90)}
+                                        if dampened and self.options.auto_dampen and period_start >= self.get_day_start_utc():
+                                            forecasts[period_start][DAMPENING_FACTOR] = round(self._auto_dampening_factors[period_start], 4)
 
                             # Prevent blocking
                             if forecast_count % 200 == 0:
@@ -5007,9 +4527,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                 build_success = False
 
         start_time = time.time()
-        await build_data(
-            self._data, commencing, forecasts, self._site_data_forecasts, self._sites_hard_limit, dampened=True
-        )
+        await build_data(self._data, commencing, forecasts, self._site_data_forecasts, self._sites_hard_limit, dampened=True)
         if build_success:
             await build_data(
                 self._data_undampened,
@@ -5068,11 +4586,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             start_index, end_index = self.__get_list_slice(self._data_forecasts, start_utc, end_utc)
 
             expected_intervals = 48
-            _is_dst: bool | None = (
-                self.is_interval_dst(self._data_forecasts[start_index])
-                if start_index < len(self._data_forecasts)
-                else None
-            )
+            _is_dst: bool | None = self.is_interval_dst(self._data_forecasts[start_index]) if start_index < len(self._data_forecasts) else None
             for interval in range(start_index, min(len(self._data_forecasts), start_index + 8)):
                 is_daylight = self.is_interval_dst(self._data_forecasts[interval])
                 if is_daylight != _is_dst:
@@ -5082,9 +4596,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             intervals = end_index - start_index
             forecasts_date = dt.now(self._tz).date() + timedelta(days=future_day)
 
-            def set_assessment(
-                forecasts_date: date, expected_intervals: int, intervals: int, contiguous: int, is_correct: bool
-            ) -> int:
+            def set_assessment(forecasts_date: date, expected_intervals: int, intervals: int, contiguous: int, is_correct: bool) -> int:
                 nonlocal all_records_good, contiguous_end_date
                 interval_assessment[forecasts_date] = {
                     EXPECTED_INTERVALS: expected_intervals,
@@ -5106,10 +4618,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             if future_day == 0 and interval_assessment[forecasts_date][CORRECT]:
                 contiguous_start_date = forecasts_date
         if time_transitioning:
-            _LOGGER.debug(
-                "Transitioning between %s time",
-                "standard/Summer" if str(self._tz) not in WINTER_TIME else "standard/Winter",
-            )
+            _LOGGER.debug("Transitioning between %s time", "standard/Summer" if str(self._tz) not in WINTER_TIME else "standard/Winter")
         if contiguous > 1:
             _LOGGER.debug(
                 "Forecast data from %s to %s contains all intervals",
@@ -5129,18 +4638,12 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                             day.strftime("%Y-%m-%d"),
                         )
                     case _:
-                        (
-                            _LOGGER.debug
-                            if contiguous == self.advanced_options[ADVANCED_FORECAST_FUTURE_DAYS] - 1
-                            else _LOGGER.warning
-                        )(
+                        (_LOGGER.debug if contiguous == self.advanced_options[ADVANCED_FORECAST_FUTURE_DAYS] - 1 else _LOGGER.warning)(
                             "Forecast data for %s contains %d of %d intervals%s",
                             day.strftime("%Y-%m-%d"),
                             assessment[INTERVALS],
                             assessment[EXPECTED_INTERVALS],
-                            ", which may be expected"
-                            if contiguous == self.advanced_options[ADVANCED_FORECAST_FUTURE_DAYS] - 1
-                            else ", so is missing forecast data",
+                            ", which may be expected" if contiguous == self.advanced_options[ADVANCED_FORECAST_FUTURE_DAYS] - 1 else ", so is missing forecast data",
                         )
         issue_registry = ir.async_get(self.hass)
 
@@ -5161,26 +4664,17 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
                 # If auto-update is enabled then raise an un-fixable issue, otherwise raise a fixable issue unless there have been failues seen.
                 raise_issue: str | None = None
                 if self.entry.options[AUTO_UPDATE] == AutoUpdate.NONE:
-                    raise_issue = (
-                        ISSUE_RECORDS_MISSING_UNFIXABLE
-                        if any(self._data[FAILURE][LAST_14D])
-                        else ISSUE_RECORDS_MISSING_FIXABLE
-                    )
+                    raise_issue = ISSUE_RECORDS_MISSING_UNFIXABLE if any(self._data[FAILURE][LAST_14D]) else ISSUE_RECORDS_MISSING_FIXABLE
 
                 # If auto-update is enabled yet the prior forecast update was manual then do not raise an issue.
-                raise_issue = (
-                    None
-                    if self._data[AUTO_UPDATED] == 0 and self.entry.options[AUTO_UPDATE] != AutoUpdate.NONE
-                    else raise_issue
-                )
+                raise_issue = None if self._data[AUTO_UPDATED] == 0 and self.entry.options[AUTO_UPDATE] != AutoUpdate.NONE else raise_issue
                 if raise_issue is not None and issue_registry.async_get_issue(DOMAIN, raise_issue) is None:
                     _LOGGER.warning("Raise issue `%s` for missing forecast data", raise_issue)
                     ir.async_create_issue(
                         self.hass,
                         DOMAIN,
                         raise_issue,
-                        is_fixable=self.entry.options[AUTO_UPDATE] == AutoUpdate.NONE
-                        and any(self._data[FAILURE][LAST_14D]) == 0,
+                        is_fixable=self.entry.options[AUTO_UPDATE] == AutoUpdate.NONE and any(self._data[FAILURE][LAST_14D]) == 0,
                         data={CONTIGUOUS: contiguous, ENTRY_ID: self.entry.entry_id if self.entry is not None else ""},
                         severity=ir.IssueSeverity.WARNING,
                         translation_key=raise_issue,
