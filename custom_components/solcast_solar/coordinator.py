@@ -179,9 +179,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
         self.__get_value: dict[str, list[dict[str, Any]]] = {
             ENTITY_FORECAST_THIS_HOUR: [{METHOD: self.solcast.get_forecast_n_hour, VALUE: 0}],
             ENTITY_FORECAST_NEXT_HOUR: [{METHOD: self.solcast.get_forecast_n_hour, VALUE: 1}],
-            ENTITY_FORECAST_CUSTOM_HOURS: [
-                {METHOD: self.solcast.get_forecast_custom_hours, VALUE: self.solcast.custom_hour_sensor}
-            ],
+            ENTITY_FORECAST_CUSTOM_HOURS: [{METHOD: self.solcast.get_forecast_custom_hours, VALUE: self.solcast.custom_hour_sensor}],
             ENTITY_FORECAST_REMAINING_TODAY: [{METHOD: self.solcast.get_forecast_remaining_today}],
             ENTITY_FORECAST_REMAINING_TODAY_OLD: [{METHOD: self.solcast.get_forecast_remaining_today}],
             ENTITY_POWER_NOW: [{METHOD: self.solcast.get_power_n_minutes, VALUE: 0}],
@@ -196,19 +194,10 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
             ENTITY_LAST_UPDATED: [{METHOD: self.solcast.get_last_updated}],
             ENTITY_LAST_UPDATED_OLD: [{METHOD: self.solcast.get_last_updated}],
             ENTITY_DAMPEN: [{METHOD: self.solcast.get_dampen}],
-            ENTITY_TOTAL_KWH_FORECAST_TOMORROW_AFTERNOON: [
-                {
-                    METHOD: self.solcast.get_forecast_tomorrow_afternoon,
-                    VALUE: self.solcast.custom_afternoon_hours_sensor,
-                }
-            ],
-            ENTITY_TOTAL_KWH_FORECAST_TOMORROW_MORNING: [
-                {METHOD: self.solcast.get_forecast_tomorrow_morning, VALUE: self.solcast.custom_morning_hours_sensor}
-            ],
+            ENTITY_TOTAL_KWH_FORECAST_TOMORROW_AFTERNOON: [{METHOD: self.solcast.get_forecast_tomorrow_afternoon, VALUE: self.solcast.custom_afternoon_hours_sensor}],
+            ENTITY_TOTAL_KWH_FORECAST_TOMORROW_MORNING: [{METHOD: self.solcast.get_forecast_tomorrow_morning, VALUE: self.solcast.custom_morning_hours_sensor}],
         }
-        days = [ENTITY_TOTAL_KWH_FORECAST_TODAY, ENTITY_TOTAL_KWH_FORECAST_TOMORROW] + [
-            f"total_kwh_forecast_d{r}" for r in range(3, self.advanced_day_entities)
-        ]
+        days = [ENTITY_TOTAL_KWH_FORECAST_TODAY, ENTITY_TOTAL_KWH_FORECAST_TOMORROW] + [f"total_kwh_forecast_d{r}" for r in range(3, self.advanced_day_entities)]
         self.__get_value |= {
             day: [
                 {METHOD: self.solcast.get_total_energy_forecast_day, VALUE: ahead},
@@ -243,30 +232,16 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
         self.__auto_update_setup(init=True)
         await self.__check_forecast_fetch()
 
-        self.tasks[TASK_LISTENERS] = async_track_utc_time_change(
-            self.hass, self.update_integration_listeners, minute=range(0, 60, 5), second=0
-        )
-        self.tasks[TASK_CHECK_FETCH] = async_track_utc_time_change(
-            self.hass, self.__check_forecast_fetch, minute=range(0, 60, 5), second=0
-        )
-        self.tasks[TASK_MIDNIGHT_UPDATE] = async_track_utc_time_change(
-            self.hass, self.__update_utc_midnight_usage_sensor_data, hour=0, minute=0, second=0
-        )
-        self.tasks[TASK_WATCHDOG_ADVANCED_FILE_CHANGE] = (
-            asyncio.create_task(
-                self.watch_for_file(TASK_WATCHDOG_ADVANCED, self._file_advanced, self.watch_advanced_file)
-            )
-        ).cancel
+        self.tasks[TASK_LISTENERS] = async_track_utc_time_change(self.hass, self.update_integration_listeners, minute=range(0, 60, 5), second=0)
+        self.tasks[TASK_CHECK_FETCH] = async_track_utc_time_change(self.hass, self.__check_forecast_fetch, minute=range(0, 60, 5), second=0)
+        self.tasks[TASK_MIDNIGHT_UPDATE] = async_track_utc_time_change(self.hass, self.__update_utc_midnight_usage_sensor_data, hour=0, minute=0, second=0)
+        self.tasks[TASK_WATCHDOG_ADVANCED_FILE_CHANGE] = (asyncio.create_task(self.watch_for_file(TASK_WATCHDOG_ADVANCED, self._file_advanced, self.watch_advanced_file))).cancel
         if not self.solcast.options.auto_dampen:
             self.tasks[TASK_WATCHDOG_DAMPENING_FILE_CHANGE] = (
-                asyncio.create_task(
-                    self.watch_for_file(TASK_WATCHDOG_DAMPENING, self._file_dampening, self.watch_dampening_file)
-                )
+                asyncio.create_task(self.watch_for_file(TASK_WATCHDOG_DAMPENING, self._file_dampening, self.watch_dampening_file))
             ).cancel
             if CONFIG_FOLDER_DISCRETE:
-                self.tasks[TASK_WATCHDOG_DAMPENING_LEGACY] = (
-                    asyncio.create_task(self.watch_for_dampening_legacy_location())
-                ).cancel
+                self.tasks[TASK_WATCHDOG_DAMPENING_LEGACY] = (asyncio.create_task(self.watch_for_dampening_legacy_location())).cancel
         else:
             _LOGGER.debug("Not monitoring dampening file, auto-dampening is enabled")
         for task in sorted(self.tasks):
@@ -299,13 +274,9 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
 
         def on_created(self, event: DirCreatedEvent | FileCreatedEvent):
             """File has been created."""
-            if isinstance(event, FileCreatedEvent) and (
-                self._coordinator.tasks.get(self._task) is None or self._direct_task
-            ):
+            if isinstance(event, FileCreatedEvent) and (self._coordinator.tasks.get(self._task) is None or self._direct_task):
                 if event.src_path == self._path:
-                    self._coordinator.watchdog[self._task if not self._direct_task else self._direct_task][EVENT] = (
-                        FileEvent.CREATE
-                    )
+                    self._coordinator.watchdog[self._task if not self._direct_task else self._direct_task][EVENT] = FileEvent.CREATE
 
         def on_moved(self, event: DirMovedEvent | FileMovedEvent) -> None:
             """File has been moved/renamed away from self._path."""
@@ -329,9 +300,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
             observer = Observer()
             observer.schedule(
                 self.StartEventHandler(self, task, file_path),
-                path=f"{self.hass.config.config_dir}/{CONFIG_DISCRETE_NAME}"
-                if CONFIG_FOLDER_DISCRETE
-                else self.hass.config.config_dir,
+                path=f"{self.hass.config.config_dir}/{CONFIG_DISCRETE_NAME}" if CONFIG_FOLDER_DISCRETE else self.hass.config.config_dir,
                 recursive=False,
             )
             observer.start()
@@ -339,11 +308,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
             try:
                 while not self.hass.is_stopping:
                     await asyncio.sleep(1)
-                    if (
-                        self.watchdog[task][EVENT] == FileEvent.CREATE
-                        and self.tasks.get(task) is None
-                        and Path(file_path).exists()
-                    ):
+                    if self.watchdog[task][EVENT] == FileEvent.CREATE and self.tasks.get(task) is None and Path(file_path).exists():
                         self.watchdog[task][EVENT] = FileEvent.UPDATE
                         self.tasks[task] = (asyncio.create_task(handler())).cancel
                         _LOGGER.debug("Running task %s", task)
@@ -369,10 +334,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
 
         def on_modified(self, event: DirModifiedEvent | FileModifiedEvent) -> None:
             """File has been modified."""
-            if (
-                isinstance(event, FileModifiedEvent)
-                and self._coordinator.watchdog[self._task][EVENT] != FileEvent.UPDATE
-            ):
+            if isinstance(event, FileModifiedEvent) and self._coordinator.watchdog[self._task][EVENT] != FileEvent.UPDATE:
                 self._coordinator.watchdog[self._task][EVENT] = FileEvent.UPDATE
 
     async def watch_dampening_file(self):
@@ -388,10 +350,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
             try:
                 while not self.hass.is_stopping and self.tasks and self.watchdog[task][EVENT] != FileEvent.DELETE:
                     await asyncio.sleep(0.5)
-                    if (
-                        self.watchdog[task][EVENT] == FileEvent.UPDATE
-                        and self.solcast.granular_dampening_mtime != Path(self._file_dampening).stat().st_mtime
-                    ):
+                    if self.watchdog[task][EVENT] == FileEvent.UPDATE and self.solcast.granular_dampening_mtime != Path(self._file_dampening).stat().st_mtime:
                         self.watchdog[task][EVENT] = FileEvent.NO_EVENT
                         _LOGGER.debug("Granular dampening mtime changed")
                         await self.solcast.refresh_granular_dampening_data()
@@ -402,9 +361,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
                         await self.update_integration_listeners()
                         self.set_data_updated(False)
                 if self.watchdog[task][EVENT] == FileEvent.DELETE:
-                    _LOGGER.debug(
-                        "Granular dampening file deleted, no longer monitoring %s for changes", self._file_dampening
-                    )
+                    _LOGGER.debug("Granular dampening file deleted, no longer monitoring %s for changes", self._file_dampening)
                     self.solcast.granular_dampening = {}
                     entry = self.solcast.entry
                     opt = self.solcast.entry_options
@@ -443,9 +400,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
                             _LOGGER.debug("Advanced options changed, restarting")
                             async_call_later(self.hass, 1, self.__restart)
                 if self.watchdog[task][EVENT] == FileEvent.DELETE:
-                    _LOGGER.debug(
-                        "Advanced options file deleted, no longer monitoring %s for changes", self._file_advanced
-                    )
+                    _LOGGER.debug("Advanced options file deleted, no longer monitoring %s for changes", self._file_advanced)
                     self.solcast.set_default_advanced_options()
             finally:
                 observer.stop()
@@ -525,15 +480,13 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
         percentiles_to_calculate = tuple(self.solcast.advanced_options[ADVANCED_ESTIMATED_ACTUALS_LOG_APE_PERCENTILES])
 
         earliest_undampened_start = self.solcast.get_earliest_estimate_after_undampened(
-            self.solcast.get_day_start_utc()
-            - timedelta(days=self.solcast.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MODEL_DAYS])
+            self.solcast.get_day_start_utc() - timedelta(days=self.solcast.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MODEL_DAYS])
         )
         if not self.solcast.options.get_actuals or earliest_undampened_start is None:
             return
         if self.solcast.options.auto_dampen:
             earliest_dampened_start = self.solcast.get_earliest_estimate_after_dampened(
-                self.solcast.get_day_start_utc()
-                - timedelta(days=self.solcast.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MODEL_DAYS])
+                self.solcast.get_day_start_utc() - timedelta(days=self.solcast.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MODEL_DAYS])
             )
 
         ignored_intervals: list[int] = []  # Intervals to ignore in local time zone
@@ -544,20 +497,14 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
 
         export_limited_intervals = dict.fromkeys(range(50), False)
         if not self.solcast.advanced_options[ADVANCED_AUTOMATED_DAMPENING_NO_LIMITING_CONSISTENCY]:
-            for gen in self.solcast.get_data_generation()[GENERATION][
-                -1 * self.solcast.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MODEL_DAYS] * 48 :
-            ]:
+            for gen in self.solcast.get_data_generation()[GENERATION][-1 * self.solcast.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MODEL_DAYS] * 48 :]:
                 if gen[EXPORT_LIMITING]:
                     export_limited_intervals[self.solcast.adjusted_interval(gen)] = True
 
-        data_generation = copy.deepcopy(
-            self.solcast.get_data_generation()
-        )  # Must be a copy as values are modified below
+        data_generation = copy.deepcopy(self.solcast.get_data_generation())  # Must be a copy as values are modified below
         generation_dampening: defaultdict[dt, dict[str, Any]] = defaultdict(dict[str, Any])
         generation_dampening_day: defaultdict[dt, float] = defaultdict(float)
-        for record in data_generation.get(GENERATION, [])[
-            -1 * self.solcast.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MODEL_DAYS] * 48 :
-        ]:
+        for record in data_generation.get(GENERATION, [])[-1 * self.solcast.advanced_options[ADVANCED_AUTOMATED_DAMPENING_MODEL_DAYS] * 48 :]:
             if record[PERIOD_START] < earliest_undampened_start:
                 continue
 
@@ -574,11 +521,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
                 EXPORT_LIMITING: record[EXPORT_LIMITING],
             }
             if not record[EXPORT_LIMITING]:
-                generation_dampening_day[
-                    record[PERIOD_START]
-                    .astimezone(self.solcast.options.tz)
-                    .replace(hour=0, minute=0, second=0, microsecond=0)
-                ] += record[GENERATION]
+                generation_dampening_day[record[PERIOD_START].astimezone(self.solcast.options.tz).replace(hour=0, minute=0, second=0, microsecond=0)] += record[GENERATION]
 
         async def calculate_error(
             generation_day: defaultdict[dt, float],
@@ -591,25 +534,14 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
             error: defaultdict[dt, float] = defaultdict(float)
             last_day: dt | None = None
             for interval in values:
-                i = (
-                    interval[PERIOD_START]
-                    .astimezone(self.solcast.options.tz)
-                    .replace(hour=0, minute=0, second=0, microsecond=0)
-                )
+                i = interval[PERIOD_START].astimezone(self.solcast.options.tz).replace(hour=0, minute=0, second=0, microsecond=0)
                 if i != last_day:
                     value_day[i] = 0.0
                     last_day = i
-                if (
-                    generation.get(interval[PERIOD_START]) is not None
-                    and not generation[interval[PERIOD_START]][EXPORT_LIMITING]
-                ):
+                if generation.get(interval[PERIOD_START]) is not None and not generation[interval[PERIOD_START]][EXPORT_LIMITING]:
                     value_day[i] += interval[ESTIMATE] / 2  # 30 minute intervals
             for day, value in value_day.items():
-                error[day] = (
-                    abs(generation_day[day] - value) / generation_day[day] * 100.0
-                    if generation_day[day] > 0
-                    else math.inf
-                )
+                error[day] = abs(generation_day[day] - value) / generation_day[day] * 100.0 if generation_day[day] > 0 else math.inf
                 if self.solcast.advanced_options[ADVANCED_ESTIMATED_ACTUALS_LOG_MAPE_BREAKDOWN]:
                     _LOGGER.debug(
                         "APE calculation for day %s, Actual %.2f kWh, Estimate %.2f kWh, Error %.2f%s",
@@ -637,9 +569,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
                 _LOGGER.debug(
                     "Calculating dampened estimated actual MAPE from %s to %s",
                     earliest_dampened_start.astimezone(self.solcast.options.tz).strftime(DT_DATE_ONLY_FORMAT),
-                    (self.solcast.get_day_start_utc() - timedelta(minutes=30))
-                    .astimezone(self.solcast.options.tz)
-                    .strftime(DT_DATE_ONLY_FORMAT),
+                    (self.solcast.get_day_start_utc() - timedelta(minutes=30)).astimezone(self.solcast.options.tz).strftime(DT_DATE_ONLY_FORMAT),
                 )
             inf_d, error_dampened, error_dampened_percentiles = await calculate_error(
                 generation_dampening_day,
@@ -658,9 +588,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.debug(
                 "Calculating undampened estimated actual MAPE from %s to %s",
                 earliest_undampened_start.astimezone(self.solcast.options.tz).strftime(DT_DATE_ONLY_FORMAT),
-                (self.solcast.get_day_start_utc() - timedelta(minutes=30))
-                .astimezone(self.solcast.options.tz)
-                .strftime(DT_DATE_ONLY_FORMAT),
+                (self.solcast.get_day_start_utc() - timedelta(minutes=30)).astimezone(self.solcast.options.tz).strftime(DT_DATE_ONLY_FORMAT),
             )
         inf_u, error_undampened, error_undampened_percentiles = await calculate_error(
             generation_dampening_day,
@@ -674,11 +602,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
         )
         if inf_u or inf_d:
             _LOGGER.debug("Excluding %s values", math.inf)
-        _LOGGER.debug(
-            "Estimated actual mean APE: %.2f%%%s",
-            error_undampened,
-            f", ({error_dampened:.2f}% dampened)" if error_dampened != -1.0 else "",
-        )
+        _LOGGER.debug("Estimated actual mean APE: %.2f%%%s", error_undampened, f", ({error_dampened:.2f}% dampened)" if error_dampened != -1.0 else "")
         for i, p in enumerate(percentiles_to_calculate):
             _LOGGER.debug(
                 "Estimated actual %dth percentile APE: %.2f%%%s",
@@ -703,19 +627,12 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
                         dt.now(self.solcast.options.tz).replace(
                             hour=0,
                             minute=0,
-                            second=5
-                            if self.solcast.advanced_options[ADVANCED_AUTOMATED_DAMPENING_GENERATION_FETCH_DELAY] == 0
-                            else 0,
+                            second=5 if self.solcast.advanced_options[ADVANCED_AUTOMATED_DAMPENING_GENERATION_FETCH_DELAY] == 0 else 0,
                             microsecond=0,
                         )  # i.e. just past midnight local
-                        + timedelta(
-                            minutes=self.solcast.advanced_options[ADVANCED_AUTOMATED_DAMPENING_GENERATION_FETCH_DELAY]
-                        )
+                        + timedelta(minutes=self.solcast.advanced_options[ADVANCED_AUTOMATED_DAMPENING_GENERATION_FETCH_DELAY])
                     )
-                    _LOGGER.debug(
-                        "Scheduling generation update at %s",
-                        update_at.astimezone(self.solcast.options.tz).strftime(DT_TIME_FORMAT),
-                    )
+                    _LOGGER.debug("Scheduling generation update at %s", update_at.astimezone(self.solcast.options.tz).strftime(DT_TIME_FORMAT))
                     self.tasks[TASK_NEW_DAY_GENERATION] = async_track_point_in_utc_time(
                         self.hass,
                         self.__generation,
@@ -731,20 +648,11 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
                 now_minute = self.__get_minute_of_day(dt.now(self.solcast.options.tz))
                 if now_minute <= self.solcast.advanced_options[ADVANCED_ESTIMATED_ACTUALS_FETCH_DELAY]:
                     update_at = (
-                        dt.now(self.solcast.options.tz).replace(
-                            hour=0, minute=0, second=0, microsecond=0
-                        )  # i.e. midnight local
-                        + timedelta(
-                            minutes=max(
-                                now_minute, self.solcast.advanced_options[ADVANCED_ESTIMATED_ACTUALS_FETCH_DELAY]
-                            )
-                        )
+                        dt.now(self.solcast.options.tz).replace(hour=0, minute=0, second=0, microsecond=0)  # i.e. midnight local
+                        + timedelta(minutes=max(now_minute, self.solcast.advanced_options[ADVANCED_ESTIMATED_ACTUALS_FETCH_DELAY]))
                         + timedelta(minutes=randint(1, 14), seconds=randint(0, 59))
                     )
-                    _LOGGER.debug(
-                        "Scheduling estimated actuals update at %s",
-                        update_at.astimezone(self.solcast.options.tz).strftime(DT_TIME_FORMAT),
-                    )
+                    _LOGGER.debug("Scheduling estimated actuals update at %s", update_at.astimezone(self.solcast.options.tz).strftime(DT_TIME_FORMAT))
                     self.tasks[TASK_NEW_DAY_ACTUALS] = async_track_point_in_utc_time(
                         self.hass,
                         self.__actuals,
@@ -759,9 +667,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
         if self.tasks.get(TASK_MIDNIGHT_UPDATE):
             self.tasks[TASK_MIDNIGHT_UPDATE]()  # Cancel the tracker
         _LOGGER.debug("Cancelled task midnight_update")
-        self.tasks[TASK_MIDNIGHT_UPDATE] = async_track_utc_time_change(
-            self.hass, self.__update_utc_midnight_usage_sensor_data, hour=0, minute=0, second=0
-        )
+        self.tasks[TASK_MIDNIGHT_UPDATE] = async_track_utc_time_change(self.hass, self.__update_utc_midnight_usage_sensor_data, hour=0, minute=0, second=0)
         _LOGGER.debug("Started task midnight_update")
 
     def set_next_update(self) -> None:
@@ -769,11 +675,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
         self.solcast.set_next_update(None)
         if len(self._intervals) > 0:
             next_update = self._intervals[0].astimezone(self.solcast.options.tz)
-            self.solcast.set_next_update(
-                next_update.strftime(DT_TIME_FORMAT)
-                if next_update.date() == dt.now().date()
-                else next_update.strftime(DT_DATE_FORMAT)
-            )
+            self.solcast.set_next_update(next_update.strftime(DT_TIME_FORMAT) if next_update.date() == dt.now().date() else next_update.strftime(DT_DATE_FORMAT))
 
     async def __actuals(self, _: dt | None = None) -> None:
         _LOGGER.info("Update estimated actuals")
@@ -806,13 +708,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
                         update_in = int((interval - _now).total_seconds())
                         if update_in >= 0:
                             task_name = f"pending_update_{update_in:03}"
-                            _LOGGER.debug(
-                                "Create task %s to fire at %02d:%02d:%02d UTC",
-                                task_name,
-                                interval.hour,
-                                interval.minute,
-                                interval.second,
-                            )
+                            _LOGGER.debug("Create task %s to fire at %02d:%02d:%02d UTC", task_name, interval.hour, interval.minute, interval.second)
                             self._update_sequence.append(update_in)
                             self.tasks[task_name] = async_track_point_in_utc_time(
                                 self.hass,
@@ -911,17 +807,10 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
             intervals_yesterday = []
             if sunrise == self._sunrise:
                 seconds = int((self._sunset_yesterday - self._sunrise_yesterday).total_seconds())
-                intervals_yesterday = [
-                    (self._sunrise_yesterday + timedelta(seconds=int(seconds / self.divisions * i))).replace(
-                        microsecond=0
-                    )
-                    for i in range(self.divisions)
-                ]
+                intervals_yesterday = [(self._sunrise_yesterday + timedelta(seconds=int(seconds / self.divisions * i))).replace(microsecond=0) for i in range(self.divisions)]
             seconds = int((sunset - sunrise).total_seconds())
             interval = seconds / self.divisions
-            intervals = intervals_yesterday + [
-                (sunrise + timedelta(seconds=interval * i)).replace(microsecond=0) for i in range(self.divisions)
-            ]
+            intervals = intervals_yesterday + [(sunrise + timedelta(seconds=interval * i)).replace(microsecond=0) for i in range(self.divisions)]
             _now = self.solcast.get_real_now_utc()
             for i in intervals:
                 if i < _now:
@@ -930,23 +819,17 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
                     break
             intervals = [i for i in intervals if i > _now]
             if log:
-                _LOGGER.debug(
-                    "Auto update total seconds %d, divisions %d, interval %d seconds", seconds, self.divisions, interval
-                )
+                _LOGGER.debug("Auto update total seconds %d, divisions %d, interval %d seconds", seconds, self.divisions, interval)
                 if init:
                     _LOGGER.debug(
                         "Auto update forecasts %s",
-                        "over 24 hours"
-                        if self.solcast.options.auto_update == AutoUpdate.ALL_DAY
-                        else "between sunrise and sunset",
+                        "over 24 hours" if self.solcast.options.auto_update == AutoUpdate.ALL_DAY else "between sunrise and sunset",
                     )
             if sunrise == self._sunrise:
                 just_passed = "Unknown"
                 if self.interval_just_passed is not None:
                     if self.interval_just_passed in intervals_yesterday:
-                        just_passed = self.interval_just_passed.astimezone(self.solcast.options.tz).strftime(
-                            DT_DATE_FORMAT
-                        )
+                        just_passed = self.interval_just_passed.astimezone(self.solcast.options.tz).strftime(DT_DATE_FORMAT)
                     else:
                         just_passed = self.interval_just_passed.astimezone(self.solcast.options.tz).strftime("%H:%M:%S")
                     _LOGGER.debug("Previous auto update UTC %s", self.interval_just_passed.isoformat())
@@ -955,10 +838,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
 
         def format_intervals(intervals: list[dt]) -> list[str]:
             return [
-                i.astimezone(self.solcast.options.tz).strftime("%H:%M")
-                if len(intervals) > 10
-                else i.astimezone(self.solcast.options.tz).strftime("%H:%M:%S")
-                for i in intervals
+                i.astimezone(self.solcast.options.tz).strftime("%H:%M") if len(intervals) > 10 else i.astimezone(self.solcast.options.tz).strftime("%H:%M:%S") for i in intervals
             ]
 
         intervals_today = get_intervals(self._sunrise, self._sunset)
@@ -1000,14 +880,10 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
         """Get updated forecast data."""
 
         try:
-            _LOGGER.debug(
-                "Started task %s", "update" if completion == "" else completion.replace("Completed task ", "")
-            )
+            _LOGGER.debug("Started task %s", "update" if completion == "" else completion.replace("Completed task ", ""))
             _LOGGER.debug("Checking for stale usage cache")
             if self.solcast.is_stale_usage_cache():
-                _LOGGER.warning(
-                    "Usage cache reset time is stale, last reset was more than 24-hours ago, resetting API usage"
-                )
+                _LOGGER.warning("Usage cache reset time is stale, last reset was more than 24-hours ago, resetting API usage")
                 await self.solcast.reset_usage_cache()
                 await self.__restart_time_track_midnight_update()
 
@@ -1035,10 +911,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
             ServiceValidationError: Notify Home Assistant that an error has occurred.
 
         """
-        if (
-            self.tasks.get(TASK_FORECASTS_FETCH_IMMEDIATE) is None
-            and self.solcast.tasks.get(TASK_FORECASTS_FETCH) is None
-        ):
+        if self.tasks.get(TASK_FORECASTS_FETCH_IMMEDIATE) is None and self.solcast.tasks.get(TASK_FORECASTS_FETCH) is None:
             if self.solcast.reauth_required:
                 raise ConfigEntryAuthFailed(translation_domain=DOMAIN, translation_key="init_key_invalid")
 
@@ -1060,10 +933,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
             ServiceValidationError: Notify Home Assistant that an error has occurred.
 
         """
-        if (
-            self.tasks.get(TASK_FORECASTS_FETCH_IMMEDIATE) is None
-            and self.solcast.tasks.get(TASK_FORECASTS_FETCH) is None
-        ):
+        if self.tasks.get(TASK_FORECASTS_FETCH_IMMEDIATE) is None and self.solcast.tasks.get(TASK_FORECASTS_FETCH) is None:
             if self.solcast.reauth_required:
                 raise ConfigEntryAuthFailed(translation_domain=DOMAIN, translation_key=EXCEPTION_INIT_KEY_INVALID)
 
@@ -1197,11 +1067,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
             return None
         ret: dict[str, Any] = {}
         for fetch in self.__get_value[key] if key not in NO_ATTRIBUTES else []:
-            to_return = (
-                self.solcast.get_forecast_attributes(fetch[METHOD], fetch.get(VALUE, 0))
-                if fetch[METHOD] != self.solcast.get_forecast_day
-                else fetch[METHOD](fetch[VALUE])
-            )
+            to_return = self.solcast.get_forecast_attributes(fetch[METHOD], fetch.get(VALUE, 0)) if fetch[METHOD] != self.solcast.get_forecast_day else fetch[METHOD](fetch[VALUE])
             if to_return is not None:
                 ret.update(to_return)
 
@@ -1210,9 +1076,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
                 # Granular dampening
                 ret[INTEGRATION_AUTOMATED] = self.solcast.options.auto_dampen
                 ret[LAST_UPDATED] = (
-                    dt.fromtimestamp(self.solcast.granular_dampening_mtime)
-                    .replace(microsecond=0)
-                    .astimezone(self.solcast.options.tz)
+                    dt.fromtimestamp(self.solcast.granular_dampening_mtime).replace(microsecond=0).astimezone(self.solcast.options.tz)
                     if self.solcast.granular_dampening_mtime
                     else None
                 )
@@ -1220,9 +1084,7 @@ class SolcastUpdateCoordinator(DataUpdateCoordinator):
                     factors: dict[str, dict[str, Any]] = {}
                     dst = False
                     for i, f in enumerate(self.solcast.granular_dampening.get(ALL, [])):
-                        dst = dt.now(self.solcast.options.tz).replace(
-                            hour=i // 2, minute=i % 2 * 30, second=0, microsecond=0
-                        ).dst() == timedelta(hours=1)
+                        dst = dt.now(self.solcast.options.tz).replace(hour=i // 2, minute=i % 2 * 30, second=0, microsecond=0).dst() == timedelta(hours=1)
                         interval = f"{i // 2 + (1 if dst else 0):02d}:{i % 2 * 30:02d}"
                         factors[interval] = {
                             INTERVAL: interval,
