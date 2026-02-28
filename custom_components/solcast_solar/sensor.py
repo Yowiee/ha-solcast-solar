@@ -397,9 +397,7 @@ async def async_setup_entry(
             }
             sen = SolcastSensor(coordinator, entry, k)
             entities.append(sen)
-        expecting_limits = [
-            f"hard_limit_{api_key_last_six(api_key)}" for api_key in coordinator.solcast.options.api_key.split(",")
-        ]
+        expecting_limits = [f"hard_limit_{api_key_last_six(api_key)}" for api_key in coordinator.solcast.options.api_key.split(",")]
 
     # Clean up.
     entity_registry = er.async_get(hass)
@@ -495,9 +493,7 @@ class SolcastSensor(CoordinatorEntity, SensorEntity):
         await super().async_added_to_hass()
 
         if self.entity_description.key in (ENTITY_LAST_UPDATED, ENTITY_LAST_UPDATED_OLD):
-            self._state_info[UNRECORDED_ATTRIBUTES] = frozenset(
-                [AUTO_UPDATE_NEXT, AUTO_UPDATE_DIVISIONS, AUTO_UPDATE_QUEUE]
-            )
+            self._state_info[UNRECORDED_ATTRIBUTES] = frozenset([AUTO_UPDATE_NEXT, AUTO_UPDATE_DIVISIONS, AUTO_UPDATE_QUEUE])
 
         elif str(self.entity_description.key).startswith(ENTITY_TOTAL_KWH_FORECAST):
             exclude = [DETAILED_FORECAST, DETAILED_HOURLY]
