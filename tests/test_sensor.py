@@ -442,9 +442,7 @@ async def test_sensor_states(  # noqa: C901
         return estimate_set
 
     try:
-        config_dir = (
-            f"{hass.config.config_dir}/{CONFIG_DISCRETE_NAME}" if CONFIG_FOLDER_DISCRETE else hass.config.config_dir
-        )
+        config_dir = f"{hass.config.config_dir}/{CONFIG_DISCRETE_NAME}" if CONFIG_FOLDER_DISCRETE else hass.config.config_dir
         if CONFIG_FOLDER_DISCRETE:
             Path(config_dir).mkdir(parents=False, exist_ok=True)
         Path(f"{config_dir}/solcast-advanced.json").write_text(json.dumps({"entity_logging": True}), encoding="utf-8")
@@ -480,9 +478,7 @@ async def test_sensor_states(  # noqa: C901
                             values["breakdown"]["3"] = {}
                             for breakdown, value in values["breakdown"]["2"].items():
                                 values["breakdown"]["3"][breakdown.replace("2", "3")] = value
-                            values["attributes"]["1"] |= (
-                                values["breakdown"]["1"] | values["breakdown"]["2"] | values["breakdown"]["3"]
-                            )
+                            values["attributes"]["1"] |= values["breakdown"]["1"] | values["breakdown"]["2"] | values["breakdown"]["3"]
                 case "2":
                     for values in sensors.values():
                         if values.get("breakdown"):
@@ -532,9 +528,7 @@ async def test_sensor_states(  # noqa: C901
                 test = state.state
                 with contextlib.suppress(AttributeError, ValueError):
                     testd = dt.fromisoformat(test)
-                    test = (
-                        testd.replace(year=2024, month=1, day=1).astimezone(ZoneInfo(hass.config.time_zone)).isoformat()
-                    )
+                    test = testd.replace(year=2024, month=1, day=1).astimezone(ZoneInfo(hass.config.time_zone)).isoformat()
                 if attrs["state"][key] == "isodate":
                     assert dt.fromisoformat(test)
                 else:
