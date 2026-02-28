@@ -325,9 +325,7 @@ class SolcastSolarFlowHandler(ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_API_KEY, default=all_config_data[CONF_API_KEY]): str,
                     vol.Required(API_QUOTA, default=all_config_data[API_QUOTA]): str,
                     vol.Required(AUTO_UPDATE, default=str(all_config_data[AUTO_UPDATE])): SelectSelector(
-                        SelectSelectorConfig(
-                            options=AUTO_UPDATE_OPTIONS, mode=SelectSelectorMode.DROPDOWN, translation_key=AUTO_UPDATE
-                        )
+                        SelectSelectorConfig(options=AUTO_UPDATE_OPTIONS, mode=SelectSelectorMode.DROPDOWN, translation_key=AUTO_UPDATE)
                     ),
                 }
             ),
@@ -396,9 +394,7 @@ class SolcastSolarFlowHandler(ConfigFlow, domain=DOMAIN):
         solcast_json_exists = Path(f"{self.hass.config.config_dir}/solcast.json").is_file()
         _LOGGER.debug(
             "File solcast.json %s",
-            "exists, defaulting to auto-update off"
-            if solcast_json_exists
-            else "does not exist, defaulting to auto-update on",
+            "exists, defaulting to auto-update off" if solcast_json_exists else "does not exist, defaulting to auto-update on",
         )
 
         return self.async_show_form(
@@ -408,9 +404,7 @@ class SolcastSolarFlowHandler(ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_API_KEY, default=""): str,
                     vol.Required(API_QUOTA, default="10"): str,
                     vol.Required(AUTO_UPDATE, default=str(int(not solcast_json_exists))): SelectSelector(
-                        SelectSelectorConfig(
-                            options=AUTO_UPDATE_OPTIONS, mode=SelectSelectorMode.DROPDOWN, translation_key=AUTO_UPDATE
-                        )
+                        SelectSelectorConfig(options=AUTO_UPDATE_OPTIONS, mode=SelectSelectorMode.DROPDOWN, translation_key=AUTO_UPDATE)
                     ),
                 }
             ),
@@ -606,8 +600,7 @@ class SolcastSolarOptionFlowHandler(OptionsFlow):
         exclude: list[SelectOptionDict] = [SelectOptionDict(label="not_loaded", value="")]
         if solcast is not None:
             exclude = [
-                SelectOptionDict(label=site[NAME] + " (" + site[RESOURCE_ID] + ")", value=site[RESOURCE_ID])
-                for site in solcast.sites
+                SelectOptionDict(label=site[NAME] + " (" + site[RESOURCE_ID] + ")", value=site[RESOURCE_ID]) for site in solcast.sites
             ]
 
         entity_registry = er.async_get(self.hass)
@@ -639,14 +632,10 @@ class SolcastSolarOptionFlowHandler(OptionsFlow):
                     vol.Required(CONF_API_KEY, default=self._options.get(CONF_API_KEY)): str,
                     vol.Required(API_QUOTA, default=self._options[API_QUOTA]): str,
                     vol.Required(AUTO_UPDATE, default=str(int(self._options[AUTO_UPDATE]))): SelectSelector(
-                        SelectSelectorConfig(
-                            options=update, mode=SelectSelectorMode.DROPDOWN, translation_key=AUTO_UPDATE
-                        )
+                        SelectSelectorConfig(options=update, mode=SelectSelectorMode.DROPDOWN, translation_key=AUTO_UPDATE)
                     ),
                     vol.Required(KEY_ESTIMATE, default=self._options.get(KEY_ESTIMATE, "estimate")): SelectSelector(
-                        SelectSelectorConfig(
-                            options=forecasts, mode=SelectSelectorMode.DROPDOWN, translation_key=KEY_ESTIMATE
-                        )
+                        SelectSelectorConfig(options=forecasts, mode=SelectSelectorMode.DROPDOWN, translation_key=KEY_ESTIMATE)
                     ),
                     vol.Required(CUSTOM_HOUR_SENSOR, default=self._options[CUSTOM_HOUR_SENSOR]): int,
                     vol.Required(HARD_LIMIT_API, default=self._options.get(HARD_LIMIT_API)): str,
@@ -662,9 +651,7 @@ class SolcastSolarOptionFlowHandler(OptionsFlow):
                     ),
                     vol.Optional(GET_ACTUALS, default=self._options[GET_ACTUALS]): bool,
                     vol.Optional(AUTO_DAMPEN, default=self._options[AUTO_DAMPEN]): bool,
-                    vol.Optional(
-                        GENERATION_ENTITIES, default=self._options.get(GENERATION_ENTITIES, [])
-                    ): SelectSelector(
+                    vol.Optional(GENERATION_ENTITIES, default=self._options.get(GENERATION_ENTITIES, [])): SelectSelector(
                         SelectSelectorConfig(options=sensors, mode=SelectSelectorMode.DROPDOWN, multiple=True)
                     ),
                     vol.Optional(SITE_EXPORT_ENTITY, default=site_export_default): SelectSelector(
@@ -675,9 +662,7 @@ class SolcastSolarOptionFlowHandler(OptionsFlow):
                         default=self._options.get(SITE_EXPORT_LIMIT, 0.0),
                     ): vol.All(vol.Coerce(float), vol.Range(min=0.0, max=100.0)),
                     vol.Required(USE_ACTUALS, default=str(int(self._options.get(USE_ACTUALS, 0)))): SelectSelector(
-                        SelectSelectorConfig(
-                            options=history, mode=SelectSelectorMode.DROPDOWN, translation_key=ENERGY_HISTORY
-                        )
+                        SelectSelectorConfig(options=history, mode=SelectSelectorMode.DROPDOWN, translation_key=ENERGY_HISTORY)
                     ),
                 }
                 | damp
