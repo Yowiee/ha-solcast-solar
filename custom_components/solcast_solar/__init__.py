@@ -869,6 +869,8 @@ async def async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
         or changed(HARD_LIMIT_API)
         or changed(CUSTOM_HOUR_SENSOR)
         or changed(SITE_EXPORT_ENTITY)
+        or changed(CUSTOM_MORNING_HOURS_SENSOR)
+        or changed(CUSTOM_AFTERNOON_HOURS_SENSOR)
     )
 
     # Config changes, which when changed will cause a forecast recalculation only, without reload.

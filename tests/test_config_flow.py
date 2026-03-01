@@ -34,7 +34,9 @@ from homeassistant.components.solcast_solar.const import (
     BRK_SITE_DETAILED,
     CONFIG_DISCRETE_NAME,
     CONFIG_FOLDER_DISCRETE,
+    CUSTOM_AFTERNOON_HOURS_SENSOR,
     CUSTOM_HOUR_SENSOR,
+    CUSTOM_MORNING_HOURS_SENSOR,
     DOMAIN,
     EXCLUDE_SITES,
     GENERATION_ENTITIES,
@@ -179,7 +181,9 @@ async def test_create_entry(hass: HomeAssistant) -> None:
         CONF_API_KEY: KEY1,
         API_QUOTA: "10",
         AUTO_UPDATE: 1,
+        CUSTOM_AFTERNOON_HOURS_SENSOR: 14.0,
         CUSTOM_HOUR_SENSOR: 1,
+        CUSTOM_MORNING_HOURS_SENSOR: 11.0,
         HARD_LIMIT_API: "100.0",
         KEY_ESTIMATE: "estimate",
         BRK_ESTIMATE: True,
@@ -567,6 +571,47 @@ async def test_options_custom_hour_sensor(hass: HomeAssistant, options: dict[str
 @pytest.mark.parametrize(
     ("options", "value", "reason"),
     [
+        ((DEFAULT_INPUT1, -1.3, "custom_invalid")),
+        ((DEFAULT_INPUT1, 24.1, "custom_invalid")),
+        ((DEFAULT_INPUT1, 7.7, None)),
+    ],
+)
+async def test_options_custom_afternoon_hour_sensor(hass: HomeAssistant, options: dict[str, Any], value: float, reason: str | None) -> None:
+    """Test that valid/invalid custom afternoon hour sensor is handled."""
+
+    flow = SolcastSolarOptionFlowHandler(MOCK_ENTRY1)
+    flow.hass = hass
+
+    user_input = copy.deepcopy(options)
+    user_input[CUSTOM_AFTERNOON_HOURS_SENSOR] = value
+    result = await flow.async_step_init(user_input)
+    if reason is not None:
+        assert result["errors"]["base"] == reason  # type: ignore[index]
+
+@pytest.mark.parametrize(
+    ("options", "value", "reason"),
+    [
+        ((DEFAULT_INPUT1, -1.3, "custom_invalid")),
+        ((DEFAULT_INPUT1, 24.1, "custom_invalid")),
+        ((DEFAULT_INPUT1, 7.7, None)),
+    ],
+)
+async def test_options_custom_morning_hour_sensor(hass: HomeAssistant, options: dict[str, Any], value: float, reason: str | None) -> None:
+    """Test that valid/invalid custom morning hour sensor is handled."""
+
+    flow = SolcastSolarOptionFlowHandler(MOCK_ENTRY1)
+    flow.hass = hass
+
+    user_input = copy.deepcopy(options)
+    user_input[CUSTOM_MORNING_HOURS_SENSOR] = value
+    result = await flow.async_step_init(user_input)
+    if reason is not None:
+        assert result["errors"]["base"] == reason  # type: ignore[index]
+
+
+@pytest.mark.parametrize(
+    ("options", "value", "reason"),
+    [
         ((DEFAULT_INPUT1, "invalid", "hard_not_number")),
         ((DEFAULT_INPUT1, "-1", "hard_not_number")),
         ((DEFAULT_INPUT1, "6,6.0", "hard_too_many")),
@@ -713,6 +758,9 @@ async def test_entry_options_upgrade(
         assert entry.options.get(GENERATION_ENTITIES) == []
         assert entry.options.get(SITE_EXPORT_LIMIT) == 0.0
         assert entry.options.get(AUTO_DAMPEN) is False
+        # V19
+        assert entry.options.get(CUSTOM_MORNING_HOURS_SENSOR) == 11.0
+        assert entry.options.get(CUSTOM_AFTERNOON_HOURS_SENSOR) == 14.0
 
         assert await hass.config_entries.async_unload(entry.entry_id)
         await hass.async_block_till_done()

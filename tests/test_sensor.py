@@ -626,7 +626,7 @@ async def test_sensor_forecast_tomorrow_afternoon(
 
     try:
         options = copy.deepcopy(DEFAULT_INPUT1)
-        options[CUSTOM_AFTERNOON_HOURS_SENSOR] = 11.0
+        options[CUSTOM_AFTERNOON_HOURS_SENSOR] = 14.0
         entry = await async_init_integration(hass, options)
 
         er.async_get(hass).async_update_entity("sensor.solcast_pv_forecast_forecast_tomorrow_afternoon", disabled_by=None)
