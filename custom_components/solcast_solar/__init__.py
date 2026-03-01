@@ -230,6 +230,8 @@ async def __get_options(hass: HomeAssistant, entry: ConfigEntry) -> ConnectionOp
         entry.options.get(SITE_EXPORT_ENTITY, ""),
         entry.options.get(SITE_EXPORT_LIMIT, 0.0),
         entry.options.get(AUTO_DAMPEN, False),
+        entry.options.get(CUSTOM_MORNING_HOURS_SENSOR, 11.0),
+        entry.options.get(CUSTOM_AFTERNOON_HOURS_SENSOR, 14.0),
     )
 
 
