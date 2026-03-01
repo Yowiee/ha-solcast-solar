@@ -1311,7 +1311,7 @@ v4.4.12
 
 * Add custom forecast sensors `forecast_tomorrow_morning` and `forecast_tomorrow_afternoon` by @Yowiee
 
-Full Changelog: https://github.com/BJReplay/ha-solcast-solar/compare/v4.4.12...v4.4.12
+Full Changelog: https://github.com/BJReplay/ha-solcast-solar/compare/v4.4.11...v4.4.12
 
 v4.4.11
 
