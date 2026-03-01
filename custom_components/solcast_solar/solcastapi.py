@@ -2307,9 +2307,10 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             forecast_confidence (str): A optional forecast type, used to select the pv_estimate, pv_estimate10 or pv_estimate90 returned.
 
         Returns:
-            int | None - A forecast for a multiple hour period as Wh (either used for a sensor or its attributes).
+            int | None - A forecast for a multiple hour period as kWh (either used for a sensor or its attributes).
         """
-        minutes, hours = math.modf(start_time)
+        minutes_frac, hours = math.modf(start_time)
+        minutes = minutes_frac * 60.0
         start_utc = self.get_day_start_utc(future=1) + timedelta(hours=hours, minutes=minutes)
         end_utc = self.get_day_start_utc(future=2)
         remaining = self.__get_forecast_pv_remaining(
@@ -2318,7 +2319,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             site=site,
             forecast_confidence=forecast_confidence,
         )
-        return round(1000 * remaining) if remaining is not None else None
+        return round(remaining) if remaining is not None else None
 
     def get_forecast_tomorrow_morning(
         self,
@@ -2334,9 +2335,10 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             forecast_confidence (str): A optional forecast type, used to select the pv_estimate, pv_estimate10 or pv_estimate90 returned.
 
         Returns:
-            int | None - A forecast for a multiple hour period as Wh (either used for a sensor or its attributes).
+            int | None - A forecast for a multiple hour period as kWh (either used for a sensor or its attributes).
         """
-        minutes, hours = math.modf(end_time)
+        minutes_frac, hours = math.modf(end_time)
+        minutes = minutes_frac * 60.0
         start_utc = self.get_day_start_utc(future=1)
         end_utc = self.get_day_start_utc(future=1) + timedelta(hours=hours, minutes=minutes)
         remaining = self.__get_forecast_pv_remaining(
@@ -2345,7 +2347,7 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             site=site,
             forecast_confidence=forecast_confidence,
         )
-        return round(1000 * remaining) if remaining is not None else None
+        return round(remaining) if remaining is not None else None
 
     def get_power_n_minutes(
         self,
