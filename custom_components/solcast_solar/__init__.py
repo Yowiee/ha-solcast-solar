@@ -48,7 +48,9 @@ from .const import (
     BRK_SITE_DETAILED,
     CONFIG_DISCRETE_NAME,
     CONFIG_FOLDER_DISCRETE,
+    CUSTOM_AFTERNOON_HOURS_SENSOR,
     CUSTOM_HOUR_SENSOR,
+    CUSTOM_MORNING_HOURS_SENSOR,
     DAILY_LIMIT,
     DAMP_FACTOR,
     DEFAULT_SOLCAST_HTTPS_URL,
@@ -955,6 +957,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     v14: (4.2.4)    Hard limit adjustable by Solcast account
     v15: (4.3.3)    Exclude sites from core forecast
     v18: (4.4.0)    Auto-dampen
+    v19: (4.4.1)    Add custom morning and afternoon forecast sensors
 
     An upgrade of the integration will sequentially upgrade options to the current
     version, with this function needing to consider all upgrade history and new defaults.
@@ -1057,6 +1060,10 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         new_options[SITE_EXPORT_ENTITY] = ""
         new_options[SITE_EXPORT_LIMIT] = 0.0
 
+    async def __v19(hass: HomeAssistant, new_options: dict[str, Any]) -> None:
+        new_options[CUSTOM_MORNING_HOURS_SENSOR] = 11.0
+        new_options[CUSTOM_AFTERNOON_HOURS_SENSOR] = 14.0
+        
     upgrades: list[dict[str, Any]] = [
         {VERSION: 4, UPGRADE_FUNCTION: __v4},
         {VERSION: 5, UPGRADE_FUNCTION: __v5},
@@ -1068,6 +1075,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         {VERSION: 14, UPGRADE_FUNCTION: __v14},
         {VERSION: 15, UPGRADE_FUNCTION: __v15},
         {VERSION: 18, UPGRADE_FUNCTION: __v18},
+        {VERSION: 19, UPGRADE_FUNCTION: __v19},
     ]
     for upgrade in upgrades:
         if entry.version < upgrade[VERSION]:
