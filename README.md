@@ -1307,6 +1307,12 @@ The code itself resides at `/config/custom_components/solcast_solar`, and removi
 
 ## Changes
 
+v4.4.12
+
+* Add custom forecast sensors `forecast_tomorrow_morning` and `forecast_tomorrow_afternoon` by @Yowiee
+
+Full Changelog: https://github.com/BJReplay/ha-solcast-solar/compare/v4.4.12...v4.4.12
+
 v4.4.11
 
 * Fix advanced option validation for `not_set_if` by @autoSteve
