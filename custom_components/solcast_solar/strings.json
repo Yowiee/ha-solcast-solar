@@ -359,8 +359,8 @@
           "site_export_entity": "Optional site export entity for automated dampening (Wh/kWh/MWh, total increasing)",
           "site_export_limit": "Site export limit if site export is specified (kW)",
           "use_actuals": "Forecast history to show on the Energy dashboard",
-          "custom_morning_hours_sensor": "Custom morning hours sensor (min=0, max=24)",
-          "custom_afternoon_hours_sensor": "Custom afternoon hours sensor (min=0, max=24)"        },
+          "custom_morning_hours_sensor": "Custom morning hours sensor (min=0.0, max=24.0)",
+          "custom_afternoon_hours_sensor": "Custom afternoon hours sensor (min=0.0, max=24.0)"        },
         "description": "Solcast configuration options"
       }
     }
