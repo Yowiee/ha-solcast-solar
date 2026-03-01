@@ -221,56 +221,6 @@ SENSORS: dict[str, dict[str, Any]] = {
         "can_be_unavailable": True,
         "should_be_disabled": True,
     },
-    # TODO: add test
-    "forecast_today_morning": {
-        "state": {"2": "42.552", "1": "58.509"},
-        "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR,
-        "state_class": SensorStateClass.TOTAL,
-        "attributes": {
-            "2": {"estimate": 42.552, "estimate10": 35.46, "estimate90": 47.28},
-            "1": {"estimate": 58.509, "estimate10": 48.7575, "estimate90": 65.01},
-        },
-        "breakdown": {
-            "1": {
-                "1111_1111_1111_1111": 26.595,
-                "estimate_1111_1111_1111_1111": 26.595,
-                "estimate10_1111_1111_1111_1111": 22.1625,
-                "estimate90_1111_1111_1111_1111": 29.55,
-            },
-            "2": {
-                "2222_2222_2222_2222": 15.957,
-                "estimate_2222_2222_2222_2222": 15.957,
-                "estimate10_2222_2222_2222_2222": 13.2975,
-                "estimate90_2222_2222_2222_2222": 17.73,
-            },
-        },
-        "can_be_unavailable": True,
-    },
-    # TODO: add test
-    "forecast_today_afternoon": {
-        "state": {"2": "42.552", "1": "58.509"},
-        "unit_of_measurement": UnitOfEnergy.KILO_WATT_HOUR,
-        "state_class": SensorStateClass.TOTAL,
-        "attributes": {
-            "2": {"estimate": 42.552, "estimate10": 35.46, "estimate90": 47.28},
-            "1": {"estimate": 58.509, "estimate10": 48.7575, "estimate90": 65.01},
-        },
-        "breakdown": {
-            "1": {
-                "1111_1111_1111_1111": 26.595,
-                "estimate_1111_1111_1111_1111": 26.595,
-                "estimate10_1111_1111_1111_1111": 22.1625,
-                "estimate90_1111_1111_1111_1111": 29.55,
-            },
-            "2": {
-                "2222_2222_2222_2222": 15.957,
-                "estimate_2222_2222_2222_2222": 15.957,
-                "estimate10_2222_2222_2222_2222": 13.2975,
-                "estimate90_2222_2222_2222_2222": 17.73,
-            },
-        },
-        "can_be_unavailable": True,
-    },
     "peak_forecast_tomorrow": {
         "state": {"2": "7200", "1": "9900"},
         "unit_of_measurement": UnitOfPower.WATT,
@@ -640,7 +590,56 @@ async def test_sensor_x_hours_long(
         assert await async_cleanup_integration_tests(hass)
 
 
-# TODO: add test
+async def test_sensor_forecast_tomorrow_morning(
+    recorder_mock: Recorder,
+    hass: HomeAssistant,
+    caplog: pytest.LogCaptureFixture,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Test state and of forecast_tomorrow_morning sensor."""
+
+    try:
+        options = copy.deepcopy(DEFAULT_INPUT1)
+        options[CUSTOM_MORNING_HOURS_SENSOR] = 11.0
+        entry = await async_init_integration(hass, options)
+
+        er.async_get(hass).async_update_entity("sensor.solcast_pv_forecast_forecast_tomorrow_morning", disabled_by=None)
+        await hass.config_entries.async_reload(entry.entry_id)
+        await hass.async_block_till_done()
+
+        state = hass.states.get("sensor.solcast_pv_forecast_forecast_tomorrow_morning")
+        assert state
+        assert state.state == "16.128"
+        _no_exception(caplog)
+
+    finally:
+        assert await async_cleanup_integration_tests(hass)
+
+
+async def test_sensor_forecast_tomorrow_afternoon(
+    recorder_mock: Recorder,
+    hass: HomeAssistant,
+    caplog: pytest.LogCaptureFixture,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Test state and of forecast_tomorrow_afternoon sensor."""
+
+    try:
+        options = copy.deepcopy(DEFAULT_INPUT1)
+        options[CUSTOM_AFTERNOON_HOURS_SENSOR] = 11.0
+        entry = await async_init_integration(hass, options)
+
+        er.async_get(hass).async_update_entity("sensor.solcast_pv_forecast_forecast_tomorrow_afternoon", disabled_by=None)
+        await hass.config_entries.async_reload(entry.entry_id)
+        await hass.async_block_till_done()
+
+        state = hass.states.get("sensor.solcast_pv_forecast_forecast_tomorrow_afternoon")
+        assert state
+        assert state.state == "28.368"
+        _no_exception(caplog)
+
+    finally:
+        assert await async_cleanup_integration_tests(hass)
 
 
 async def test_sensor_unavailable(
