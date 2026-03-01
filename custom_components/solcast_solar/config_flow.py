@@ -194,7 +194,7 @@ async def validate_sites(hass: HomeAssistant, user_input: dict[str, Any]) -> tup
         user_input[SITE_EXPORT_LIMIT],
         user_input[AUTO_DAMPEN],
         user_input[CUSTOM_MORNING_HOURS_SENSOR],
-        custom_afternoon_hours_sensor=user_input[CUSTOM_AFTERNOON_HOURS_SENSOR],
+        user_input[CUSTOM_AFTERNOON_HOURS_SENSOR],
     )
     solcast = SolcastApi(session, options, hass)
     await solcast.read_advanced_options()
