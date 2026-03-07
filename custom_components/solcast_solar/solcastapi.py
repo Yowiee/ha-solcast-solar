@@ -2310,10 +2310,11 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             int | None - A forecast for a multiple hour period as kWh (either used for a sensor or its attributes).
         """
         minutes_frac, hours = math.modf(start_time)
-        minutes = minutes_frac * 60.0
+        minutes = math.floor(minutes_frac * 60)
         start_utc = self.get_day_start_utc(future=1) + timedelta(hours=hours, minutes=minutes)
         end_utc = self.get_day_start_utc(future=2)
-        remaining = self.__get_forecast_pv_remaining(
+        _LOGGER.info("get_forecast_tomorrow_afternoon start_utc %s, end_utc %s", start_utc, end_utc)
+        remaining = self.__get_forecast_pv_estimates(
             start_utc,
             end_utc=end_utc,
             site=site,
@@ -2338,10 +2339,11 @@ class SolcastApi:  # pylint: disable=too-many-public-methods
             int | None - A forecast for a multiple hour period as kWh (either used for a sensor or its attributes).
         """
         minutes_frac, hours = math.modf(end_time)
-        minutes = minutes_frac * 60.0
+        minutes = math.floor(minutes_frac * 60)
         start_utc = self.get_day_start_utc(future=1)
         end_utc = self.get_day_start_utc(future=1) + timedelta(hours=hours, minutes=minutes)
-        remaining = self.__get_forecast_pv_remaining(
+        _LOGGER.info("get_forecast_tomorrow_morning start_utc %s, end_utc %s", start_utc, end_utc)
+        remaining = self.__get_forecast_pv_estimates(
             start_utc,
             end_utc=end_utc,
             site=site,
