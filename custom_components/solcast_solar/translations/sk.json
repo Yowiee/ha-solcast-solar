@@ -352,9 +352,7 @@
           "site_damp": "Granulované tlmenie je nastavené: Clear pre návrat k celkovému hodinovému tlmeniu",
           "site_export_entity": "Voliteľná entita exportu lokality pre automatické tlmenie (Wh/kWh/MWh, celkový nárast)",
           "site_export_limit": "Limit exportu lokality, ak je export lokality špecifikovaný (kW)",
-          "use_actuals": "História predpovedí na zobrazenie na paneli Energy",
-          "custom_morning_hours_sensor": "Custom morning hours sensor (min=0, max=24)",
-          "custom_afternoon_hours_sensor": "Custom afternoon hours sensor (min=0, max=24)"
+          "use_actuals": "História predpovedí na zobrazenie na paneli Energy"
         },
         "description": "Solcast možnosti konfigurácie"
       }

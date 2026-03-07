@@ -352,9 +352,7 @@
           "site_damp": "L'amortissement granulaire est défini : Effacer pour revenir à l'amortissement horaire global",
           "site_export_entity": "Entité d'exportation de site optionnelle pour amortissement automatisé (Wh/kWh/MWh, augmentation totale)",
           "site_export_limit": "Limite d'exportation de site si l'exportation de site est spécifiée (kW)",
-          "use_actuals": "Historique des prévisions à afficher sur le tableau de bord Énergie",
-          "custom_morning_hours_sensor": "Custom morning hours sensor (min=0, max=24)",
-          "custom_afternoon_hours_sensor": "Custom afternoon hours sensor (min=0, max=24)"
+          "use_actuals": "Historique des prévisions à afficher sur le tableau de bord Énergie"
         },
         "description": "Options de configuration Solcast"
       }

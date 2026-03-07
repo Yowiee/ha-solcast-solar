@@ -352,9 +352,7 @@
           "site_damp": "O amortecimento granular está definido: Limpar para reverter para o amortecimento horário geral",
           "site_export_entity": "Entidade de exportação de site opcional para amortecimento automatizado (Wh/kWh/MWh, total crescente)",
           "site_export_limit": "Limite de exportação de site se a exportação de site for especificada (kW)",
-          "use_actuals": "História de previsões para mostrar no painel de energia",
-          "custom_morning_hours_sensor": "Custom morning hours sensor (min=0, max=24)",
-          "custom_afternoon_hours_sensor": "Custom afternoon hours sensor (min=0, max=24)"
+          "use_actuals": "História de previsões para mostrar no painel de energia"
         },
         "description": "Opções de configuração do Solcast"
       }

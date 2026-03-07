@@ -352,9 +352,7 @@
           "site_damp": "Die granulare Dämpfung ist eingestellt: Löschen, um zur stündlichen Gesamtdämpfung zurückzukehren",
           "site_export_entity": "Optionale Site-Export-Einheit für automatisierte Dämpfung (Wh/kWh/MWh, Gesamterhöhung)",
           "site_export_limit": "Site-Export-Limit, wenn der Site-Export angegeben ist (kW)",
-          "use_actuals": "Prognosehistorie, die im Energiedashboard angezeigt werden soll",
-          "custom_morning_hours_sensor": "Custom morning hours sensor (min=0, max=24)",
-          "custom_afternoon_hours_sensor": "Custom afternoon hours sensor (min=0, max=24)"
+          "use_actuals": "Prognosehistorie, die im Energiedashboard angezeigt werden soll"
         },
         "description": "Dein Solcast-API-Kontoschlüssel"
       }

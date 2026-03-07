@@ -352,9 +352,7 @@
           "site_damp": "Ustawiono tłumienie szczegółowe: Wyczyść, aby powrócić do ogólnego tłumienia godzinowego",
           "site_export_entity": "Opcjonalna jednostka eksportu witryny do automatycznego tłumienia (Wh/kWh/MWh, całkowity wzrost)",
           "site_export_limit": "Limit eksportu witryny, jeśli eksport witryny jest określony (kW)",
-          "use_actuals": "Historia prognoz do wyświetlenia na pulpicie nawigacyjnym Energy",
-          "custom_morning_hours_sensor": "Custom morning hours sensor (min=0, max=24)",
-          "custom_afternoon_hours_sensor": "Custom afternoon hours sensor (min=0, max=24)"
+          "use_actuals": "Historia prognoz do wyświetlenia na pulpicie nawigacyjnym Energy"
         },
         "description": "Opcje konfiguracji Solcast"
       }
