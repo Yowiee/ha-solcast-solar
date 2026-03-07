@@ -634,8 +634,8 @@ class SolcastSolarOptionFlowHandler(OptionsFlow):
                         SelectSelectorConfig(options=forecasts, mode=SelectSelectorMode.DROPDOWN, translation_key=KEY_ESTIMATE)
                     ),
                     vol.Required(CUSTOM_HOUR_SENSOR, default=self._options[CUSTOM_HOUR_SENSOR]): int,
-                    vol.Required(CUSTOM_MORNING_HOURS_SENSOR, default=self._options[CUSTOM_MORNING_HOURS_SENSOR]): float,
-                    vol.Required(CUSTOM_AFTERNOON_HOURS_SENSOR, default=self._options[CUSTOM_AFTERNOON_HOURS_SENSOR]): float,
+                    vol.Required(CUSTOM_MORNING_HOURS_SENSOR, default=self._options[CUSTOM_MORNING_HOURS_SENSOR]): vol.All(vol.Coerce(float), vol.Range(min=0.0, max=24.0)),
+                    vol.Required(CUSTOM_AFTERNOON_HOURS_SENSOR, default=self._options[CUSTOM_AFTERNOON_HOURS_SENSOR]): vol.All(vol.Coerce(float), vol.Range(min=0.0, max=24.0)),
                     vol.Required(HARD_LIMIT_API, default=self._options.get(HARD_LIMIT_API)): str,
                     vol.Optional(BRK_ESTIMATE10, default=self._options[BRK_ESTIMATE10]): bool,
                     vol.Optional(BRK_ESTIMATE, default=self._options[BRK_ESTIMATE]): bool,
